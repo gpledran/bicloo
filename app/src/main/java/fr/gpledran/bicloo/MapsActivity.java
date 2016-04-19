@@ -1,5 +1,7 @@
 package fr.gpledran.bicloo;
 
+import android.support.annotation.NonNull;
+import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentActivity;
@@ -10,12 +12,15 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.gson.GsonBuilder;
 
@@ -47,9 +52,25 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        // Obtain the Material Toolbar
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        // Obtain the BottomSheet
+        final View bottomSheet = findViewById(R.id.bottom_sheet);
+        final BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+        bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+
+            }
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+                // React to dragging events
+
+            }
+        });
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
     }
 
     /**
@@ -91,8 +112,47 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     currentStation = stationList.get(i);
                     map.addMarker(new MarkerOptions()
                                         .position(new LatLng(currentStation.getPosition().getLat(), currentStation.getPosition().getLng()))
-                                        .title(currentStation.getName()));
+                                        .title(currentStation.getName())
+                                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));
+
                 }
+                map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+                    @Override
+                    public boolean onMarkerClick(Marker marker) {
+                        marker.showInfoWindow();
+                        map.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 15.0f));
+
+                        int markerPosition = Integer.parseInt(marker.getId().substring(1));
+                        Station stationToShow =  stationList.get(markerPosition);
+                        Log.d("Marker click" , "Station : " + marker.getTitle());
+
+                        TextView name = (TextView) findViewById(R.id.station_name);
+                        name.setText("Nom : " + stationToShow.getName());
+
+                        TextView address = (TextView) findViewById(R.id.station_address);
+                        address.setText("Adresse : " + stationToShow.getAddress());
+
+                        TextView banking = (TextView) findViewById(R.id.station_banking);
+                        banking.setText("Carte bancaire : " + stationToShow.getBanking().toString());
+
+                        TextView status = (TextView) findViewById(R.id.station_status);
+                        status.setText("Etat : " + stationToShow.getStatus().toString());
+
+                        TextView bikeStands = (TextView) findViewById(R.id.station_bike_stands);
+                        bikeStands.setText("Nombre de place : " + stationToShow.getBikeStands().toString());
+
+                        TextView availableBikeStands = (TextView) findViewById(R.id.station_available_bike_stands);
+                        availableBikeStands.setText("Nombre de place disponibles : " + stationToShow.getAvailableBikeStands().toString());
+
+                        TextView availableBikes = (TextView) findViewById(R.id.station_available_bikes);
+                        availableBikes.setText("Nombre de bicloo disponibles : " + stationToShow.getAvailableBikes().toString());
+
+                        View bottomSheet = findViewById(R.id.bottom_sheet);
+                        BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+                        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                        return true;
+                    }
+                });
             }
 
             @Override
