@@ -1,12 +1,19 @@
 package fr.gpledran.bicloo.activities;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.os.Build;
+import android.os.Process;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -15,6 +22,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.drive.Permission;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -39,10 +50,15 @@ import retrofit.RetrofitError;
 import retrofit.client.Response;
 import retrofit.converter.GsonConverter;
 
-public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback,
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener {
 
     private GoogleMap map;
+    private GoogleApiClient googleApiClient;
+    private Location lastLocation;
     private List<Station> stationList;
+    private Marker myMarker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,20 +79,39 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         final BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
         bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
-            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {}
 
-            }
             @Override
-            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-                // React to dragging events
-
-            }
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {}
         });
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         bottomSheetBehavior.setPeekHeight(600);
 
+        // My Location
+        if (googleApiClient == null) {
+            googleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
+        }
+
         // My position FAB
-//        FloatingActionButton myPositionFAB = findViewById(R.id.my_position_fab);
+        FloatingActionButton positionFab = (FloatingActionButton) findViewById(R.id.my_position_fab);
+        positionFab.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(), Process.myUid());
+                lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+
+                if (lastLocation != null) {
+                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), 16.0f));
+                    if (myMarker != null) {
+                        myMarker.remove();
+                    }
+                    myMarker = map.addMarker(new MarkerOptions().position(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude())));
+                }
+            }
+        });
     }
 
     /**
@@ -137,39 +172,36 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void failure(RetrofitError error) {
                 Log.d("JCDecaux API ERROR" , "Error : " + error.toString());
-
-                CoordinatorLayout coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinate_layout);
-                Snackbar snackbar = Snackbar.make(coordinatorLayout, "Erreur lors de la récupération des données", Snackbar.LENGTH_LONG);
-
-                snackbar.show();
+                showSnackbar("Erreur lors de la récupération des données");
             }
         });
     }
 
-    private void openBottomSheet(Marker marker) {
-        int markerPosition = Integer.parseInt(marker.getId().substring(1));
-        Station stationToShow =  stationList.get(markerPosition);
+    @Override
+    protected void onStart() {
+        googleApiClient.connect();
+        super.onStart();
+    }
 
-        TextView name = (TextView) findViewById(R.id.station_name);
-        name.setText(stationToShow.getName());
+    @Override
+    protected void onStop() {
+        googleApiClient.disconnect();
+        super.onStop();
+    }
 
-        TextView banking = (TextView) findViewById(R.id.station_banking);
-        banking.setText(stationToShow.getBanking() ? "Avec terminal de paiement" : "Sans terminal de paiement");
+    @Override
+    public void onConnected(Bundle bundle) {
+        //showSnackbar("Connecté");
+    }
 
-        TextView status = (TextView) findViewById(R.id.station_status);
-        status.setText("OPEN".equalsIgnoreCase(stationToShow.getStatus()) ? "Station ouverte" : "Station fermée");
+    @Override
+    public void onConnectionSuspended(int i) {
+        showSnackbar("Déconnecté des services Google");
+    }
 
-        TextView availableBikeStands = (TextView) findViewById(R.id.station_available_bike_stands);
-        availableBikeStands.setText(stationToShow.getAvailableBikeStands().toString() +
-                (stationToShow.getAvailableBikeStands() > 0 ? " places disponibles" : " place disponible"));
-
-        TextView availableBikes = (TextView) findViewById(R.id.station_available_bikes);
-        availableBikes.setText(stationToShow.getAvailableBikes().toString() +
-                (stationToShow.getAvailableBikes() > 0 ? " vélos disponibles" : " vélo disponible"));
-
-        View bottomSheet = findViewById(R.id.bottom_sheet);
-        BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
-        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult){
+        showSnackbar("Pas de connexion aux services Google");
     }
 
     @Override
@@ -197,5 +229,44 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return super.onOptionsItemSelected(item);
 
         }
+    }
+
+    private void openBottomSheet(Marker marker) {
+        View bottomSheet = findViewById(R.id.bottom_sheet);
+        BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+
+        if (myMarker != null && myMarker.equals(marker)) {
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+            return;
+        }
+
+        int markerPosition = Integer.parseInt(marker.getId().substring(1));
+        Station stationToShow =  stationList.get(markerPosition);
+
+        TextView name = (TextView) findViewById(R.id.station_name);
+        name.setText(stationToShow.getName());
+
+        TextView banking = (TextView) findViewById(R.id.station_banking);
+        banking.setText(stationToShow.getBanking() ? "Avec terminal de paiement" : "Sans terminal de paiement");
+
+        TextView status = (TextView) findViewById(R.id.station_status);
+        status.setText("OPEN".equalsIgnoreCase(stationToShow.getStatus()) ? "Station ouverte" : "Station fermée");
+
+        TextView availableBikeStands = (TextView) findViewById(R.id.station_available_bike_stands);
+        availableBikeStands.setText(stationToShow.getAvailableBikeStands().toString() +
+                (stationToShow.getAvailableBikeStands() > 0 ? " places disponibles" : " place disponible"));
+
+        TextView availableBikes = (TextView) findViewById(R.id.station_available_bikes);
+        availableBikes.setText(stationToShow.getAvailableBikes().toString() +
+                (stationToShow.getAvailableBikes() > 0 ? " vélos disponibles" : " vélo disponible"));
+
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+    }
+
+    private void showSnackbar(String text) {
+        CoordinatorLayout coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinate_layout);
+        Snackbar snackbar = Snackbar.make(coordinatorLayout, text, Snackbar.LENGTH_LONG);
+
+        snackbar.show();
     }
 }
