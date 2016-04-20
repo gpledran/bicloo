@@ -3,4 +3,10 @@
     <string name="title_activity_maps">Bicloo - Carte</string>
     <string name="action_settings">Paramètres</string>
     <string name="action_search">Rechercher</string>
+    <string name="action_itinerary">Itinéraire</string>
+    <string name="icon_place">Nom de la station</string>
+    <string name="icon_banking">Terminale de paiement</string>
+    <string name="icon_bike">Vélos disponibles</string>
+    <string name="icon_parking">Places disponibles</string>
+    <string name="icon_status">Etat de la station</string>
 </resources>
