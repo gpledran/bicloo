@@ -2,6 +2,7 @@ package fr.gpledran.bicloo;
 
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentActivity;
@@ -72,6 +73,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         bottomSheetBehavior.setPeekHeight(600);
+
+        // My position FAB
+//        FloatingActionButton myPositionFAB = findViewById(R.id.my_position_fab);
     }
 
     /**
@@ -123,29 +127,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         marker.showInfoWindow();
                         map.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 15.0f));
 
-                        int markerPosition = Integer.parseInt(marker.getId().substring(1));
-                        Station stationToShow =  stationList.get(markerPosition);
-
-                        TextView name = (TextView) findViewById(R.id.station_name);
-                        name.setText(stationToShow.getName());
-
-                        TextView banking = (TextView) findViewById(R.id.station_banking);
-                        banking.setText(stationToShow.getBanking() ? "Avec terminal de paiement" : "Sans terminal de paiement");
-
-                        TextView status = (TextView) findViewById(R.id.station_status);
-                        status.setText("OPEN".equalsIgnoreCase(stationToShow.getStatus()) ? "Station ouverte" : "Station fermée");
-
-                        TextView availableBikeStands = (TextView) findViewById(R.id.station_available_bike_stands);
-                        availableBikeStands.setText(stationToShow.getAvailableBikeStands().toString() +
-                                (stationToShow.getAvailableBikeStands() > 0 ? " places disponibles" : " place disponible"));
-
-                        TextView availableBikes = (TextView) findViewById(R.id.station_available_bikes);
-                        availableBikes.setText(stationToShow.getAvailableBikes().toString() +
-                                (stationToShow.getAvailableBikes() > 0 ? " vélos disponibles" : " vélo disponible"));
-
-                        View bottomSheet = findViewById(R.id.bottom_sheet);
-                        BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
-                        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                        openBottomSheet(marker);
                         return true;
                     }
                 });
@@ -154,8 +136,39 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void failure(RetrofitError error) {
                 Log.d("JCDecaux API ERROR" , "Error : " + error.toString());
+
+                CoordinatorLayout coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinate_layout);
+                Snackbar snackbar = Snackbar.make(coordinatorLayout, "Erreur lors de la récupération des données", Snackbar.LENGTH_LONG);
+
+                snackbar.show();
             }
         });
+    }
+
+    private void openBottomSheet(Marker marker) {
+        int markerPosition = Integer.parseInt(marker.getId().substring(1));
+        Station stationToShow =  stationList.get(markerPosition);
+
+        TextView name = (TextView) findViewById(R.id.station_name);
+        name.setText(stationToShow.getName());
+
+        TextView banking = (TextView) findViewById(R.id.station_banking);
+        banking.setText(stationToShow.getBanking() ? "Avec terminal de paiement" : "Sans terminal de paiement");
+
+        TextView status = (TextView) findViewById(R.id.station_status);
+        status.setText("OPEN".equalsIgnoreCase(stationToShow.getStatus()) ? "Station ouverte" : "Station fermée");
+
+        TextView availableBikeStands = (TextView) findViewById(R.id.station_available_bike_stands);
+        availableBikeStands.setText(stationToShow.getAvailableBikeStands().toString() +
+                (stationToShow.getAvailableBikeStands() > 0 ? " places disponibles" : " place disponible"));
+
+        TextView availableBikes = (TextView) findViewById(R.id.station_available_bikes);
+        availableBikes.setText(stationToShow.getAvailableBikes().toString() +
+                (stationToShow.getAvailableBikes() > 0 ? " vélos disponibles" : " vélo disponible"));
+
+        View bottomSheet = findViewById(R.id.bottom_sheet);
+        BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
     }
 
     @Override

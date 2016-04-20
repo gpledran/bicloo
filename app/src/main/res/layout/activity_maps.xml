@@ -2,6 +2,7 @@
 <android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/coordinate_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
@@ -149,7 +150,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:alpha="0.36"
-                    android:src="@drawable/ic_lock_outline_black_48dp"
+                    android:src="@drawable/ic_access_time_black_48dp"
                     android:contentDescription="@string/icon_status" />
 
                 <TextView
@@ -176,5 +177,17 @@
 
     </FrameLayout>
 
+    <android.support.design.widget.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/my_position_fab"
+        android:layout_gravity="bottom|end"
+        android:visibility="visible"
+        android:layout_margin="@dimen/fab_margin"
+        android:clickable="true"
+        android:tint="@android:color/white"
+        app:layout_anchor="@id/bottom_sheet"
+        app:layout_anchorGravity="bottom|right|end"
+        android:src="@drawable/ic_my_location_black_48dp" />
 
 </android.support.design.widget.CoordinatorLayout>
