@@ -30,7 +30,9 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.gson.GsonBuilder;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import fr.gpledran.bicloo.R;
 import fr.gpledran.bicloo.api.JCDecauxService;
@@ -55,6 +57,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private List<Station> stationList;
     private Marker myMarker;
     private Station selectedStation;
+    private Map<String, Integer> hashMapMarkers;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -153,10 +156,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
 
-        // Center camera on Nantes
-        LatLng nantes = new LatLng(47.2185256, -1.55408);
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(nantes, 15.0f));
-
         // Create an adapter for retrofit with base url
         RestAdapter restAdapter = new RestAdapter.Builder()
                 .setEndpoint(JCDecauxService.BASE_URL)
@@ -168,31 +167,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Creating a service for adapter with our GET class
         JCDecauxService jcDecauxService = restAdapter.create(JCDecauxService.class);
 
-        //Now ,we need to call for response
-        //Retrofit using gson for JSON-POJO conversion
+        // Retrofit callback
         jcDecauxService.listStations("Nantes", JCDecauxService.API_KEY, new Callback<Stations>() {
             @Override
             public void success(Stations stations, Response response) {
                 stationList = stations.getStations();
-                Station currentStation;
-                for (int i=0; i<stationList.size(); i++) {
-                    currentStation = stationList.get(i);
-                    map.addMarker(new MarkerOptions()
-                                        .position(new LatLng(currentStation.getPosition().getLat(), currentStation.getPosition().getLng()))
-                                        .title(currentStation.getName())
-                                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));
-
-                }
-                map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-                    @Override
-                    public boolean onMarkerClick(Marker marker) {
-                        marker.showInfoWindow();
-                        map.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 15.0f));
-
-                        openBottomSheet(marker);
-                        return true;
-                    }
-                });
+                addStations();
             }
 
             @Override
@@ -201,6 +181,42 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 showSnackbar("Erreur lors de la récupération des données");
             }
         });
+
+        // Marker click listener
+        map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                marker.showInfoWindow();
+                map.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 15.0f));
+
+                openBottomSheet(marker);
+                return true;
+            }
+        });
+    }
+
+    private void addStations() {
+        // Center camera on Nantes
+        LatLng nantes = new LatLng(47.2185256, -1.55408);
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(nantes, 15.0f));
+
+        // Clear all markers, polylines and circle
+        map.clear();
+
+        // Instantiate HashMap use to show station in bottom sheet
+        hashMapMarkers = new HashMap<String, Integer>();
+
+        // Add markers station
+        Station currentStation;
+        Marker currentMarker;
+        for (int i=0; i<stationList.size(); i++) {
+            currentStation = stationList.get(i);
+            currentMarker = map.addMarker(new MarkerOptions()
+                                .position(new LatLng(currentStation.getPosition().getLat(), currentStation.getPosition().getLng()))
+                                .title(currentStation.getName())
+                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));
+            hashMapMarkers.put(currentMarker.getId(), i);
+        }
     }
 
     @Override
@@ -240,13 +256,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_settings:
-                // User chose the "Settings" item, show the app settings UI...
-                return true;
-
             case R.id.action_search:
                 // User chose the "Favorite" action, mark the current item
                 // as a favorite...
+                return true;
+
+            case R.id.action_refresh:
+                addStations();
+                return true;
+
+            case R.id.action_settings:
+                // User chose the "Settings" item, show the app settings UI...
                 return true;
 
             default:
@@ -266,8 +286,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             return;
         }
 
-        int markerPosition = Integer.parseInt(marker.getId().substring(1));
-        selectedStation =  stationList.get(markerPosition);
+//        markerPosition = Integer.parseInt(marker.getId().substring(1));
+        selectedStation =  stationList.get(hashMapMarkers.get(marker.getId()));
 
         TextView name = (TextView) findViewById(R.id.station_name);
         name.setText(selectedStation.getName());
