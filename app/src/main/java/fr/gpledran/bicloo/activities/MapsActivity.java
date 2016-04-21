@@ -100,47 +100,45 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // My position FAB
         FloatingActionButton positionFab = (FloatingActionButton) findViewById(R.id.my_position_fab);
-        if (positionFab != null) {
-            positionFab.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(), Process.myUid());
-                    lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+        assert positionFab != null;
+        positionFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(), Process.myUid());
+                lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
 
-                    if (lastLocation != null) {
-                        map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), 16.0f));
-                        if (myMarker != null) {
-                            myMarker.remove();
-                        }
-                        myMarker = map.addMarker(new MarkerOptions().position(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude())));
+                if (lastLocation != null) {
+                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), 16.0f));
+                    if (myMarker != null) {
+                        myMarker.remove();
                     }
+                    myMarker = map.addMarker(new MarkerOptions().position(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude())));
                 }
-            });
-        }
+            }
+        });
 
         // Itinerary FAB
         FloatingActionButton itineraryFab = (FloatingActionButton) findViewById(R.id.itinerary_fab);
-        if (itineraryFab != null) {
-            itineraryFab.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(), Process.myUid());
-                    lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+        assert itineraryFab != null;
+        itineraryFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(), Process.myUid());
+                lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
 
-                    if (lastLocation != null) {
-                        map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), 16.0f));
+                if (lastLocation != null) {
+                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), 16.0f));
 
-                        // Hide BottomSheet
-                        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+                    // Hide BottomSheet
+                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
-                        // Async drawing itinerary
-                        String origin = String.valueOf(lastLocation.getLatitude()) + "," + String.valueOf(lastLocation.getLongitude());
-                        String destination = String.valueOf(selectedStation.getPosition().getLat()) + "," + String.valueOf(selectedStation.getPosition().getLng());
-                        new ItineraryTask(MapsActivity.this, coordinatorLayout, map, origin, destination).execute();
-                    }
+                    // Async drawing itinerary
+                    String origin = String.valueOf(lastLocation.getLatitude()) + "," + String.valueOf(lastLocation.getLongitude());
+                    String destination = String.valueOf(selectedStation.getPosition().getLat()) + "," + String.valueOf(selectedStation.getPosition().getLng());
+                    new ItineraryTask(MapsActivity.this, coordinatorLayout, map, origin, destination).execute();
                 }
-            });
-        }
+            }
+        });
     }
 
     /**
@@ -156,6 +154,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
 
+        // Get stations from API
+        getStationsFromJCDecauxAPI();
+
+        // Marker click listener
+        map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                marker.showInfoWindow();
+                map.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 15.0f));
+
+                openBottomSheet(marker);
+                return true;
+            }
+        });
+    }
+
+    private void getStationsFromJCDecauxAPI() {
         // Create an adapter for retrofit with base url
         RestAdapter restAdapter = new RestAdapter.Builder()
                 .setEndpoint(JCDecauxService.BASE_URL)
@@ -172,7 +187,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void success(Stations stations, Response response) {
                 stationList = stations.getStations();
-                addStations();
+                addStationsToMap();
             }
 
             @Override
@@ -181,21 +196,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 showSnackbar("Erreur lors de la récupération des données");
             }
         });
-
-        // Marker click listener
-        map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-            @Override
-            public boolean onMarkerClick(Marker marker) {
-                marker.showInfoWindow();
-                map.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 15.0f));
-
-                openBottomSheet(marker);
-                return true;
-            }
-        });
     }
 
-    private void addStations() {
+    private void addStationsToMap() {
         // Center camera on Nantes
         LatLng nantes = new LatLng(47.2185256, -1.55408);
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(nantes, 15.0f));
@@ -204,7 +207,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         map.clear();
 
         // Instantiate HashMap use to show station in bottom sheet
-        hashMapMarkers = new HashMap<String, Integer>();
+        hashMapMarkers = new HashMap<>();
 
         // Add markers station
         Station currentStation;
@@ -242,7 +245,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
-    public void onConnectionFailed(ConnectionResult connectionResult){
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         showSnackbar("Pas de connexion aux services Google");
     }
 
@@ -257,21 +260,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_search:
-                // User chose the "Favorite" action, mark the current item
-                // as a favorite...
                 return true;
 
             case R.id.action_refresh:
-                addStations();
+                // Get stations from API
+                getStationsFromJCDecauxAPI();
                 return true;
 
             case R.id.action_settings:
-                // User chose the "Settings" item, show the app settings UI...
                 return true;
 
             default:
-                // If we got here, the user's action was not recognized.
-                // Invoke the superclass to handle it.
+                // No user's action, invoke the superclass to handle it.
                 return super.onOptionsItemSelected(item);
 
         }
@@ -281,32 +281,46 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         View bottomSheet = findViewById(R.id.bottom_sheet);
         BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
 
+        // Don't show bottom sheet on user's location marker
         if (myMarker != null && myMarker.equals(marker)) {
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
             return;
         }
 
-//        markerPosition = Integer.parseInt(marker.getId().substring(1));
+        // Fill station informations
+        setBottomSheetInformations(marker);
+
+        // Show only important's informations : name, available bikes and stands
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+    }
+
+    private void setBottomSheetInformations(Marker marker) {
+        // Get the selection station to show
         selectedStation =  stationList.get(hashMapMarkers.get(marker.getId()));
 
         TextView name = (TextView) findViewById(R.id.station_name);
+        assert name != null;
         name.setText(selectedStation.getName());
 
         TextView banking = (TextView) findViewById(R.id.station_banking);
+        assert banking != null;
         banking.setText(selectedStation.getBanking() ? "Avec terminal de paiement" : "Sans terminal de paiement");
 
         TextView status = (TextView) findViewById(R.id.station_status);
+        assert status != null;
         status.setText("OPEN".equalsIgnoreCase(selectedStation.getStatus()) ? "Station ouverte" : "Station fermée");
 
         TextView availableBikeStands = (TextView) findViewById(R.id.station_available_bike_stands);
-        availableBikeStands.setText(selectedStation.getAvailableBikeStands().toString() +
-                (selectedStation.getAvailableBikeStands() > 0 ? " places disponibles" : " place disponible"));
+        assert availableBikeStands != null;
+        availableBikeStands.setText(String.format("%s %s",
+                selectedStation.getAvailableBikeStands().toString(),
+                (selectedStation.getAvailableBikeStands() > 0 ? "places disponibles" : "place disponible")));
 
         TextView availableBikes = (TextView) findViewById(R.id.station_available_bikes);
-        availableBikes.setText(selectedStation.getAvailableBikes().toString() +
-                (selectedStation.getAvailableBikes() > 0 ? " vélos disponibles" : " vélo disponible"));
-
-        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        assert availableBikes != null;
+        availableBikes.setText(String.format("%s %s",
+                selectedStation.getAvailableBikes().toString(),
+                (selectedStation.getAvailableBikes() > 0 ? "vélos disponibles" : "vélo disponible")));
     }
 
     private void showSnackbar(String text) {
