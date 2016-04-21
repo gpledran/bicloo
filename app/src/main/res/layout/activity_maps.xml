@@ -165,15 +165,15 @@
 
         </LinearLayout>
 
-        <!--<android.support.design.widget.FloatingActionButton-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:id="@+id/itinerary_fab"-->
-            <!--android:layout_gravity="end"-->
-            <!--android:visibility="visible"-->
-            <!--android:layout_margin="@dimen/fab_margin"-->
-            <!--android:clickable="true"-->
-            <!--android:src="@drawable/ic_directions_walk_white_48dp" />-->
+        <android.support.design.widget.FloatingActionButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/itinerary_fab"
+            android:layout_gravity="end"
+            android:visibility="visible"
+            android:layout_margin="@dimen/fab_margin"
+            android:clickable="true"
+            android:src="@drawable/ic_directions_walk_white_48dp" />
 
     </FrameLayout>
 

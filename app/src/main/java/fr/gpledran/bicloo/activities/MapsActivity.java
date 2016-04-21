@@ -1,19 +1,14 @@
 package fr.gpledran.bicloo.activities;
 
 import android.Manifest;
-import android.content.pm.PackageManager;
 import android.location.Location;
-import android.os.Build;
 import android.os.Process;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -24,7 +19,6 @@ import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.drive.Permission;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -40,9 +34,10 @@ import java.util.List;
 
 import fr.gpledran.bicloo.R;
 import fr.gpledran.bicloo.api.JCDecauxService;
+import fr.gpledran.bicloo.common.ItineraryTask;
 import fr.gpledran.bicloo.model.Station;
 import fr.gpledran.bicloo.model.Stations;
-import fr.gpledran.bicloo.model.StationsDeserializerJson;
+import fr.gpledran.bicloo.common.StationsDeserializerJson;
 
 import retrofit.Callback;
 import retrofit.RestAdapter;
@@ -59,6 +54,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Location lastLocation;
     private List<Station> stationList;
     private Marker myMarker;
+    private Station selectedStation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +69,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Obtain the Material Toolbar
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        // Obtain the CoordinateLayout
+        final CoordinatorLayout coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinate_layout);
 
         // Obtain the BottomSheet
         final View bottomSheet = findViewById(R.id.bottom_sheet);
@@ -98,20 +97,47 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // My position FAB
         FloatingActionButton positionFab = (FloatingActionButton) findViewById(R.id.my_position_fab);
-        positionFab.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(), Process.myUid());
-                lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+        if (positionFab != null) {
+            positionFab.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(), Process.myUid());
+                    lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
 
-                if (lastLocation != null) {
-                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), 16.0f));
-                    if (myMarker != null) {
-                        myMarker.remove();
+                    if (lastLocation != null) {
+                        map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), 16.0f));
+                        if (myMarker != null) {
+                            myMarker.remove();
+                        }
+                        myMarker = map.addMarker(new MarkerOptions().position(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude())));
                     }
-                    myMarker = map.addMarker(new MarkerOptions().position(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude())));
                 }
-            }
-        });
+            });
+        }
+
+        // Itinerary FAB
+        FloatingActionButton itineraryFab = (FloatingActionButton) findViewById(R.id.itinerary_fab);
+        if (itineraryFab != null) {
+            itineraryFab.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(), Process.myUid());
+                    lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+
+                    if (lastLocation != null) {
+                        map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), 16.0f));
+
+                        // Hide BottomSheet
+                        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+
+                        // Async drawing itinerary
+                        String origin = String.valueOf(lastLocation.getLatitude()) + "," + String.valueOf(lastLocation.getLongitude());
+                        String destination = String.valueOf(selectedStation.getPosition().getLat()) + "," + String.valueOf(selectedStation.getPosition().getLng());
+                        new ItineraryTask(MapsActivity.this, coordinatorLayout, map, origin, destination).execute();
+                    }
+                }
+            });
+        }
     }
 
     /**
@@ -241,24 +267,24 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         int markerPosition = Integer.parseInt(marker.getId().substring(1));
-        Station stationToShow =  stationList.get(markerPosition);
+        selectedStation =  stationList.get(markerPosition);
 
         TextView name = (TextView) findViewById(R.id.station_name);
-        name.setText(stationToShow.getName());
+        name.setText(selectedStation.getName());
 
         TextView banking = (TextView) findViewById(R.id.station_banking);
-        banking.setText(stationToShow.getBanking() ? "Avec terminal de paiement" : "Sans terminal de paiement");
+        banking.setText(selectedStation.getBanking() ? "Avec terminal de paiement" : "Sans terminal de paiement");
 
         TextView status = (TextView) findViewById(R.id.station_status);
-        status.setText("OPEN".equalsIgnoreCase(stationToShow.getStatus()) ? "Station ouverte" : "Station fermée");
+        status.setText("OPEN".equalsIgnoreCase(selectedStation.getStatus()) ? "Station ouverte" : "Station fermée");
 
         TextView availableBikeStands = (TextView) findViewById(R.id.station_available_bike_stands);
-        availableBikeStands.setText(stationToShow.getAvailableBikeStands().toString() +
-                (stationToShow.getAvailableBikeStands() > 0 ? " places disponibles" : " place disponible"));
+        availableBikeStands.setText(selectedStation.getAvailableBikeStands().toString() +
+                (selectedStation.getAvailableBikeStands() > 0 ? " places disponibles" : " place disponible"));
 
         TextView availableBikes = (TextView) findViewById(R.id.station_available_bikes);
-        availableBikes.setText(stationToShow.getAvailableBikes().toString() +
-                (stationToShow.getAvailableBikes() > 0 ? " vélos disponibles" : " vélo disponible"));
+        availableBikes.setText(selectedStation.getAvailableBikes().toString() +
+                (selectedStation.getAvailableBikes() > 0 ? " vélos disponibles" : " vélo disponible"));
 
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
     }
