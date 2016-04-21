@@ -135,7 +135,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     // Async drawing itinerary
                     String origin = String.valueOf(lastLocation.getLatitude()) + "," + String.valueOf(lastLocation.getLongitude());
                     String destination = String.valueOf(selectedStation.getPosition().getLat()) + "," + String.valueOf(selectedStation.getPosition().getLng());
-                    new ItineraryTask(MapsActivity.this, coordinatorLayout, map, origin, destination).execute();
+                    new ItineraryTask(MapsActivity.this, coordinatorLayout, map, origin, destination, selectedStation.getName()).execute();
                 }
             }
         });

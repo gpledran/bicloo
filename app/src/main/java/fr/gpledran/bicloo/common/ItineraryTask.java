@@ -23,6 +23,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
@@ -36,14 +37,16 @@ public class ItineraryTask extends AsyncTask<Void, Integer, Boolean> {
     private GoogleMap gMap;
     private String origin;
     private String destination;
-    private final ArrayList<LatLng> lstLatLng = new ArrayList<LatLng>();
+    private String title;
+    private final ArrayList<LatLng> listLatLng = new ArrayList<LatLng>();
 
-    public ItineraryTask(final Context context, final CoordinatorLayout coordinatorLayout, final GoogleMap gMap, final String origin, final String destination) {
+    public ItineraryTask(final Context context, final CoordinatorLayout coordinatorLayout, final GoogleMap gMap, final String origin, final String destination, final String title) {
         this.context = context;
         this.coordinatorLayout = coordinatorLayout;
         this.gMap= gMap;
         this.origin = origin;
         this.destination = destination;
+        this.title = title;
     }
 
     @Override
@@ -130,7 +133,7 @@ public class ItineraryTask extends AsyncTask<Void, Integer, Boolean> {
             int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
             lng += dlng;
 
-            lstLatLng.add(new LatLng((double)lat/1E5, (double)lng/1E5));
+            listLatLng.add(new LatLng((double)lat/1E5, (double)lng/1E5));
         }
     }
 
@@ -152,28 +155,28 @@ public class ItineraryTask extends AsyncTask<Void, Integer, Boolean> {
             borders.zIndex(1);
 
             // Construct polyline & border
-            for(final LatLng latLng : lstLatLng) {
+            for(final LatLng latLng : listLatLng) {
                 polylines.add(latLng);
                 borders.add(latLng);
             }
 
             // Destination RED marker
             final MarkerOptions destinationMarker = new MarkerOptions();
-            destinationMarker.position(lstLatLng.get(lstLatLng.size()-1));
+            destinationMarker.position(listLatLng.get(listLatLng.size()-1));
             destinationMarker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+            destinationMarker.title(title);
 
             // Clear map for UX
             gMap.clear();
 
             // Update map with polylines
-            gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lstLatLng.get(0), 16.0f));
             gMap.addPolyline(borders);
             gMap.addPolyline(polylines);
-            gMap.addMarker(destinationMarker);
+            gMap.addMarker(destinationMarker).showInfoWindow();
 
             // Update maps with circles
             CircleOptions circleOptions = new CircleOptions();
-            circleOptions.center(lstLatLng.get(0));
+            circleOptions.center(listLatLng.get(0));
             circleOptions.radius(8);
             circleOptions.fillColor(Color.WHITE);
             circleOptions.strokeWidth(3.0f);
@@ -181,8 +184,15 @@ public class ItineraryTask extends AsyncTask<Void, Integer, Boolean> {
             circleOptions.zIndex(3);
             gMap.addCircle(circleOptions);
 
-            circleOptions.center(lstLatLng.get(lstLatLng.size()-1));
+            circleOptions.center(listLatLng.get(listLatLng.size()-1));
             gMap.addCircle(circleOptions);
+
+            // Zoom
+//            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+//            builder.include(listLatLng.get(0));
+//            builder.include(listLatLng.get(listLatLng.size()-1));
+//            gMap.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 250));
+            gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(listLatLng.get(0), 16.0f));
         }
     }
 }
