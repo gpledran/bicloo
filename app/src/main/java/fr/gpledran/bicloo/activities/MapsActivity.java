@@ -1,6 +1,8 @@
 package fr.gpledran.bicloo.activities;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.location.Location;
 import android.os.Process;
 import android.support.annotation.NonNull;
@@ -9,12 +11,14 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.os.Bundle;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -33,10 +37,12 @@ import com.google.gson.GsonBuilder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import fr.gpledran.bicloo.R;
 import fr.gpledran.bicloo.api.JCDecauxService;
 import fr.gpledran.bicloo.common.ItineraryTask;
+import fr.gpledran.bicloo.common.Toolbox;
 import fr.gpledran.bicloo.model.Station;
 import fr.gpledran.bicloo.model.Stations;
 import fr.gpledran.bicloo.common.StationsDeserializerJson;
@@ -171,6 +177,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void getStationsFromJCDecauxAPI() {
+        Toolbox.showProgressBar(findViewById(R.id.progress_overlay));
+
         // Create an adapter for retrofit with base url
         RestAdapter restAdapter = new RestAdapter.Builder()
                 .setEndpoint(JCDecauxService.BASE_URL)
@@ -188,12 +196,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void success(Stations stations, Response response) {
                 stationList = stations.getStations();
                 addStationsToMap();
+
+                Toolbox.hideProgressBar(findViewById(R.id.progress_overlay));
             }
 
             @Override
             public void failure(RetrofitError error) {
                 Log.d("JCDecaux API ERROR" , "Error : " + error.toString());
                 showSnackbar("Erreur lors de la récupération des données");
+
+                Toolbox.hideProgressBar(findViewById(R.id.progress_overlay));
             }
         });
     }
@@ -265,9 +277,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             case R.id.action_refresh:
                 // Get stations from API
                 getStationsFromJCDecauxAPI();
-                return true;
-
-            case R.id.action_settings:
                 return true;
 
             default:

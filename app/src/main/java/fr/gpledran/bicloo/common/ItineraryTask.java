@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.os.AsyncTask;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
+import android.view.View;
 
 import java.io.InputStream;
 import java.net.URL;
@@ -26,6 +27,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
+
+import fr.gpledran.bicloo.R;
 
 public class ItineraryTask extends AsyncTask<Void, Integer, Boolean> {
 
@@ -51,8 +54,9 @@ public class ItineraryTask extends AsyncTask<Void, Integer, Boolean> {
 
     @Override
     protected void onPreExecute() {
-        Snackbar snackbar = Snackbar.make(coordinatorLayout, TOAST_MSG, Snackbar.LENGTH_LONG);
-        snackbar.show();
+        Toolbox.showProgressBar(coordinatorLayout.findViewById(R.id.progress_overlay));
+//        Snackbar snackbar = Snackbar.make(coordinatorLayout, TOAST_MSG, Snackbar.LENGTH_LONG);
+//        snackbar.show();
     }
 
     @Override
@@ -194,6 +198,8 @@ public class ItineraryTask extends AsyncTask<Void, Integer, Boolean> {
 //            gMap.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 250));
             gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(listLatLng.get(0), 16.0f));
         }
+
+        Toolbox.hideProgressBar(coordinatorLayout.findViewById(R.id.progress_overlay));
     }
 }
 

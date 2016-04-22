@@ -1,10 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!--ORANGE-->
     <color name="colorPrimary">#FF9800</color>
     <color name="colorPrimaryDark">#F57C00</color>
     <color name="colorPrimaryLight">#FFE0B2</color>
+
+    <!--DEEP ORANGE-->
+    <!--<color name="colorPrimary">#FF5722</color>-->
+    <!--<color name="colorPrimaryDark">#E64A19</color>-->
+    <!--<color name="colorPrimaryLight">#FFCCBC</color>-->
+
+    <!--TEXT-->
     <color name="colorPrimaryText">#212121</color>
     <color name="colorSecondaryText">#727272</color>
     <color name="colorDivide">#B6B6B6</color>
-    <color name="colorAccent">#4CAF50</color>
+
+    <!--BLUE-->
+    <color name="colorAccent">#448AFF</color>
 </resources>
