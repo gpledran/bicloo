@@ -1,8 +1,6 @@
 package fr.gpledran.bicloo.activities;
 
 import android.Manifest;
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.location.Location;
 import android.os.Process;
 import android.support.annotation.NonNull;
@@ -11,14 +9,12 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.os.Bundle;
-import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -37,7 +33,6 @@ import com.google.gson.GsonBuilder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import fr.gpledran.bicloo.R;
 import fr.gpledran.bicloo.api.JCDecauxService;
@@ -211,9 +206,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void addStationsToMap() {
-        // Center camera on Nantes
-        LatLng nantes = new LatLng(47.2185256, -1.55408);
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(nantes, 15.0f));
+        // Center camera on Nantes, only if no station is selected
+        if (!isShowingStation()) {
+            LatLng nantes = new LatLng(47.2185256, -1.55408);
+            map.animateCamera(CameraUpdateFactory.newLatLngZoom(nantes, 15.0f));
+        }
 
         // Clear all markers, polylines and circle
         map.clear();
@@ -230,8 +227,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 .position(new LatLng(currentStation.getPosition().getLat(), currentStation.getPosition().getLng()))
                                 .title(currentStation.getName())
                                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));
+
+            // Hashmap to retrieve station by marker id
             hashMapMarkers.put(currentMarker.getId(), i);
+
+            // On refresh action, show title on marker station selected
+            if (isShowingStation() && currentStation.getNumber().equals(selectedStation.getNumber())) {
+                currentMarker.showInfoWindow();
+            }
         }
+
     }
 
     @Override
@@ -277,6 +282,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             case R.id.action_refresh:
                 // Get stations from API
                 getStationsFromJCDecauxAPI();
+
+                // Refresh selected stations informations
+                if (isShowingStation()) {
+                    refreshBottomSheetInformations();
+                }
                 return true;
 
             default:
@@ -297,16 +307,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         // Fill station informations
-        setBottomSheetInformations(marker);
+        selectedStation =  stationList.get(hashMapMarkers.get(marker.getId()));
+        refreshBottomSheetInformations();
 
         // Show only important's informations : name, available bikes and stands
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
     }
 
-    private void setBottomSheetInformations(Marker marker) {
-        // Get the selection station to show
-        selectedStation =  stationList.get(hashMapMarkers.get(marker.getId()));
-
+    private void refreshBottomSheetInformations() {
         TextView name = (TextView) findViewById(R.id.station_name);
         assert name != null;
         name.setText(selectedStation.getName());
@@ -337,5 +345,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Snackbar snackbar = Snackbar.make(coordinatorLayout, text, Snackbar.LENGTH_LONG);
 
         snackbar.show();
+    }
+
+    private boolean isShowingStation() {
+        View bottomSheet = findViewById(R.id.bottom_sheet);
+        BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+
+        return !(selectedStation == null || bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN);
     }
 }
