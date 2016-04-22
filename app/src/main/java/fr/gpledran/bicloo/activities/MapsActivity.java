@@ -225,7 +225,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             currentStation = stationList.get(i);
             currentMarker = map.addMarker(new MarkerOptions()
                                 .position(new LatLng(currentStation.getPosition().getLat(), currentStation.getPosition().getLng()))
-                                .title(currentStation.getName())
+                                .title(currentStation.getName().substring(currentStation.getName().indexOf("-")+1).trim())
                                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));
 
             // Hashmap to retrieve station by marker id
@@ -317,7 +317,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void refreshBottomSheetInformations() {
         TextView name = (TextView) findViewById(R.id.station_name);
         assert name != null;
-        name.setText(selectedStation.getName());
+        name.setText(String.format("%s - %s",
+                selectedStation.getNumber(),
+                selectedStation.getName().substring(selectedStation.getName().indexOf("-")+1).trim()));
 
         TextView banking = (TextView) findViewById(R.id.station_banking);
         assert banking != null;
