@@ -58,6 +58,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private List<Station> stationList;
     private Marker myMarker;
     private Station selectedStation;
+    private Marker selectedMarker;
     private Map<String, Integer> hashMapMarkers;
 
     @Override
@@ -82,7 +83,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         final BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
         bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
-            public void onStateChanged(@NonNull View bottomSheet, int newState) {}
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN) {
+                    selectedMarker.hideInfoWindow();
+                }
+            }
 
             @Override
             public void onSlide(@NonNull View bottomSheet, float slideOffset) {}
@@ -162,8 +167,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                marker.showInfoWindow();
-                map.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 15.0f));
+                selectedMarker = marker;
+                selectedMarker.showInfoWindow();
+                map.animateCamera(CameraUpdateFactory.newLatLngZoom(selectedMarker.getPosition(), 15.0f));
 
                 openBottomSheet(marker);
                 return true;
