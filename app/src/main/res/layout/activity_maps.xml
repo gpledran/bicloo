@@ -169,38 +169,21 @@
 
         </LinearLayout>
 
-        <android.support.design.widget.FloatingActionButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/itinerary_fab"
-            android:layout_gravity="end"
-            android:visibility="visible"
-            android:layout_margin="@dimen/fab_margin"
-            android:clickable="true"
-            android:src="@drawable/ic_directions_walk_white_48dp" />
-
     </FrameLayout>
 
-    <!--<com.getbase.floatingactionbutton.AddFloatingActionButton-->
-        <!--android:id="@+id/normal_plus"-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:layout_alignParentBottom="true"-->
-        <!--app:fab_plusIconColor="@color/half_black"-->
-        <!--app:fab_colorNormal="@color/white"-->
-        <!--app:fab_colorPressed="@color/white_pressed"-->
-        <!--android:layout_alignParentLeft="true"-->
-        <!--android:layout_alignParentStart="true"-->
-        <!--android:layout_marginBottom="16dp"-->
-        <!--android:layout_marginLeft="16dp"-->
-        <!--android:layout_marginStart="16dp"/>-->
+    <com.getbase.floatingactionbutton.FloatingActionButton
+        android:id="@+id/itinerary_fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        android:clickable="true"
+        app:fab_icon="@drawable/ic_directions_walk_white_24dp"
+        app:fab_colorNormal="@color/colorAccent"
+        android:layout_marginRight="6dp"
+        app:layout_anchor="@id/bottom_sheet"
+        app:layout_anchorGravity="top|right|end"
+        android:translationZ="@dimen/translationZ" />
 
-    <!--android:layout_above="@id/normal_plus"-->
-    <!--android:layout_alignParentLeft="true"-->
-    <!--android:layout_alignParentStart="true"-->
-    <!--android:layout_marginLeft="16dp"-->
-    <!--android:layout_marginStart="16dp"-->
-    <!--android:layout_margin="@dimen/fab_margin"-->
     <com.getbase.floatingactionbutton.FloatingActionsMenu
         android:id="@+id/fab_menu"
         android:layout_width="wrap_content"

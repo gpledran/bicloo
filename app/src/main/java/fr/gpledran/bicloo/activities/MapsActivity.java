@@ -17,6 +17,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -92,13 +93,30 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
             public void onStateChanged(@NonNull View bottomSheet, int newState) {
-                if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN && selectedMarker != null) {
+
+                if (newState == BottomSheetBehavior.STATE_HIDDEN && selectedMarker != null) {
                     selectedMarker.hideInfoWindow();
+                    com.getbase.floatingactionbutton.FloatingActionButton itineraryFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.itinerary_fab);
+                    itineraryFab.setVisibility(View.GONE);
                 }
+
+//                if (newState == BottomSheetBehavior.STATE_DRAGGING) {
+//                    com.getbase.floatingactionbutton.FloatingActionButton itineraryFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.itinerary_fab);
+////                    itineraryFab.setAnimation(getResources().getAnimation(R.anim.fab_close));
+////                    itineraryFab.startAnimation(AnimationUtils.loadAnimation(MapsActivity.this, R.anim.fab_close));
+//                    itineraryFab.setVisibility(View.GONE);
+//                }
+//
+//                if (newState == BottomSheetBehavior.STATE_EXPANDED || newState == BottomSheetBehavior.STATE_COLLAPSED) {
+//                    com.getbase.floatingactionbutton.FloatingActionButton itineraryFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.itinerary_fab);
+//                    itineraryFab.setVisibility(View.VISIBLE);
+//                }
             }
 
             @Override
-            public void onSlide(@NonNull View bottomSheet, float slideOffset) {}
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+
+            }
         });
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         bottomSheetBehavior.setPeekHeight(600);
@@ -168,7 +186,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
         // Itinerary FAB
-        FloatingActionButton itineraryFab = (FloatingActionButton) findViewById(R.id.itinerary_fab);
+        final com.getbase.floatingactionbutton.FloatingActionButton itineraryFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.itinerary_fab);
         assert itineraryFab != null;
         itineraryFab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -190,6 +208,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 // Hide Menu FAB
                 FloatingActionsMenu menuFab = (FloatingActionsMenu) findViewById(R.id.fab_menu);
                 menuFab.setVisibility(View.GONE);
+
+                // Hide Itenary FAB
+                itineraryFab.setVisibility(View.GONE);
             }
             }
         });
@@ -419,6 +440,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Show only important's informations : name, available bikes and stands
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+
+        // Show Itenary FAB
+        com.getbase.floatingactionbutton.FloatingActionButton itineraryFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.itinerary_fab);
+        itineraryFab.setVisibility(View.VISIBLE);
     }
 
     private void refreshBottomSheetInformations() {
