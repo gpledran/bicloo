@@ -289,7 +289,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
             else if (isFilterAvailableBikeStandsEnabled && isFilterOpenStationEnabled) {
-                if (currentStation.getBikeStands() > 0 && "OPEN".equalsIgnoreCase(currentStation.getStatus())) {
+                if (currentStation.getAvailableBikeStands() > 0 && "OPEN".equalsIgnoreCase(currentStation.getStatus())) {
                     filteredList.add(currentStation);
                 }
             }
