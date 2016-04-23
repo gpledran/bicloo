@@ -16,6 +16,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -342,12 +343,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 (selectedStation.getAvailableBikeStands() > 0 ? "places disponibles" : "place disponible")));
         availableBikeStands.setTextColor(getAvailabilityColor(selectedStation.getAvailableBikeStands(), selectedStation.getBikeStands()));
 
+        ImageView availableBikeStandsImg = (ImageView) findViewById(R.id.image_station_available_bike_stands);
+        availableBikeStandsImg.setColorFilter(availableBikeStands.getCurrentTextColor());
+
         TextView availableBikes = (TextView) findViewById(R.id.station_available_bikes);
         assert availableBikes != null;
         availableBikes.setText(String.format("%s %s",
                 selectedStation.getAvailableBikes().toString(),
                 (selectedStation.getAvailableBikes() > 0 ? "vélos disponibles" : "vélo disponible")));
         availableBikes.setTextColor(getAvailabilityColor(selectedStation.getAvailableBikes(), selectedStation.getBikeStands()));
+
+        ImageView availableBikesImg = (ImageView) findViewById(R.id.image_station_available_bikes);
+        availableBikesImg.setColorFilter(availableBikes.getCurrentTextColor());
     }
 
     private int getAvailabilityColor(int available, int max) {
