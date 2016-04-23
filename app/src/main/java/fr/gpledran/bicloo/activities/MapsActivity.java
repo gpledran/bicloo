@@ -242,7 +242,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 currentMarker.showInfoWindow();
             }
         }
-
     }
 
     @Override
