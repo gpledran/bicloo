@@ -10,6 +10,7 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -19,6 +20,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.getbase.floatingactionbutton.FloatingActionsMenu;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -32,6 +34,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.gson.GsonBuilder;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +65,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Station selectedStation;
     private Marker selectedMarker;
     private Map<String, Integer> hashMapMarkers;
+    private boolean isFilterAvailableBikesEnabled = false;
+    private boolean isFilterOpenStationEnabled = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,6 +111,30 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     .build();
         }
 
+        // Available bikes FAB
+        final com.getbase.floatingactionbutton.FloatingActionButton filterAvailibleBikesFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.available_bikes_filter_fab);
+        assert filterAvailibleBikesFab != null;
+        filterAvailibleBikesFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isFilterAvailableBikesEnabled = !isFilterAvailableBikesEnabled;
+                refreshStationsOnMap(filterStations());
+                refreshAvailableBikesFab(filterAvailibleBikesFab);
+            }
+        });
+
+        // Open stations FAB
+        final com.getbase.floatingactionbutton.FloatingActionButton filterOpenStationsFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.status_open_filter_fab);
+        assert filterOpenStationsFab != null;
+        filterOpenStationsFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isFilterOpenStationEnabled = !isFilterOpenStationEnabled;
+                refreshStationsOnMap(filterStations());
+                refreshOpenStationsFab(filterOpenStationsFab);
+            }
+        });
+
         // My position FAB
         FloatingActionButton positionFab = (FloatingActionButton) findViewById(R.id.my_position_fab);
         assert positionFab != null;
@@ -144,9 +173,37 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     String origin = String.valueOf(lastLocation.getLatitude()) + "," + String.valueOf(lastLocation.getLongitude());
                     String destination = String.valueOf(selectedStation.getPosition().getLat()) + "," + String.valueOf(selectedStation.getPosition().getLng());
                     new ItineraryTask(MapsActivity.this, coordinatorLayout, map, origin, destination, selectedStation.getName()).execute();
+
+                    // Hide Menu FAB
+                    FloatingActionsMenu menuFab = (FloatingActionsMenu) findViewById(R.id.fab_menu);
+                    menuFab.setVisibility(View.GONE);
                 }
             }
         });
+    }
+
+    private void refreshOpenStationsFab(com.getbase.floatingactionbutton.FloatingActionButton filterOpenStationsFab) {
+        if (isFilterOpenStationEnabled) {
+            filterOpenStationsFab.setIcon(R.drawable.ic_access_time_white_24dp);
+            filterOpenStationsFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
+            filterOpenStationsFab.setColorPressed(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
+        } else {
+            filterOpenStationsFab.setIcon(R.drawable.ic_access_time_green_700_24dp);
+            filterOpenStationsFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.white));
+            filterOpenStationsFab.setColorPressed(ContextCompat.getColor(MapsActivity.this, R.color.white));
+        }
+    }
+
+    private void refreshAvailableBikesFab(com.getbase.floatingactionbutton.FloatingActionButton filterAvailibleBikesFab) {
+        if (isFilterAvailableBikesEnabled) {
+            filterAvailibleBikesFab.setIcon(R.drawable.ic_directions_bike_white_24dp);
+            filterAvailibleBikesFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
+            filterAvailibleBikesFab.setColorPressed(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
+        } else {
+            filterAvailibleBikesFab.setIcon(R.drawable.ic_directions_bike_green_700_24dp);
+            filterAvailibleBikesFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.white));
+            filterAvailibleBikesFab.setColorPressed(ContextCompat.getColor(MapsActivity.this, R.color.white));
+        }
     }
 
     /**
@@ -169,12 +226,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                selectedMarker = marker;
-                selectedMarker.showInfoWindow();
-                map.animateCamera(CameraUpdateFactory.newLatLngZoom(selectedMarker.getPosition(), 15.0f));
+            selectedMarker = marker;
+            selectedMarker.showInfoWindow();
+            map.animateCamera(CameraUpdateFactory.newLatLngZoom(selectedMarker.getPosition(), 15.0f));
 
-                openBottomSheet(marker);
-                return true;
+            collapseMenuFab();
+            openBottomSheet(marker);
+            return true;
             }
         });
     }
@@ -198,7 +256,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void success(Stations stations, Response response) {
                 stationList = stations.getStations();
-                addStationsToMap();
+
+                // Center camera on Nantes, only if no station is selected
+                if (!isShowingStation()) {
+                    LatLng nantes = new LatLng(47.2185256, -1.55408);
+                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(nantes, 15.0f));
+                }
+
+                refreshStationsOnMap(filterStations());
 
                 Toolbox.hideProgressBar(findViewById(R.id.progress_overlay));
             }
@@ -213,13 +278,33 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
-    private void addStationsToMap() {
-        // Center camera on Nantes, only if no station is selected
-        if (!isShowingStation()) {
-            LatLng nantes = new LatLng(47.2185256, -1.55408);
-            map.animateCamera(CameraUpdateFactory.newLatLngZoom(nantes, 15.0f));
+    private List<Station> filterStations() {
+        List<Station> filteredList = new ArrayList<>();
+
+        Station currentStation;
+        for (int i=0; i<stationList.size(); i++) {
+            currentStation = stationList.get(i);
+            if (isFilterAvailableBikesEnabled && isFilterOpenStationEnabled) {
+                if (currentStation.getAvailableBikes() > 0 && "OPEN".equalsIgnoreCase(currentStation.getStatus())) {
+                    filteredList.add(currentStation);
+                }
+            } else if (isFilterAvailableBikesEnabled) {
+                if (currentStation.getAvailableBikes() > 0) {
+                    filteredList.add(currentStation);
+                }
+            } else if (isFilterOpenStationEnabled) {
+                if ("OPEN".equalsIgnoreCase(currentStation.getStatus())) {
+                    filteredList.add(currentStation);
+                }
+            } else {
+                filteredList.add(currentStation);
+            }
         }
 
+        return filteredList;
+    }
+
+    private void refreshStationsOnMap(List<Station> stationList) {
         // Clear all markers, polylines and circle
         map.clear();
 
@@ -294,6 +379,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (isShowingStation()) {
                     refreshBottomSheetInformations();
                 }
+
+                // Menu FAB
+                collapseMenuFab();
                 return true;
 
             default:
@@ -344,6 +432,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         availableBikeStands.setTextColor(getAvailabilityColor(selectedStation.getAvailableBikeStands(), selectedStation.getBikeStands()));
 
         ImageView availableBikeStandsImg = (ImageView) findViewById(R.id.image_station_available_bike_stands);
+        assert availableBikeStandsImg != null;
         availableBikeStandsImg.setColorFilter(availableBikeStands.getCurrentTextColor());
 
         TextView availableBikes = (TextView) findViewById(R.id.station_available_bikes);
@@ -354,19 +443,20 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         availableBikes.setTextColor(getAvailabilityColor(selectedStation.getAvailableBikes(), selectedStation.getBikeStands()));
 
         ImageView availableBikesImg = (ImageView) findViewById(R.id.image_station_available_bikes);
+        assert availableBikesImg != null;
         availableBikesImg.setColorFilter(availableBikes.getCurrentTextColor());
     }
 
     private int getAvailabilityColor(int available, int max) {
         if (available <= 2) {
             // Dark Primary Color RED
-            return Color.parseColor("#D32F2F");
+            return Color.parseColor("#" + Integer.toHexString(ContextCompat.getColor(MapsActivity.this, R.color.colorRedDark)));
         } else if (available > 2 && available < (max/2)) {
             // Dark Primary Color ORANGE
-            return Color.parseColor("#F57C00");
+            return Color.parseColor("#" + Integer.toHexString(ContextCompat.getColor(MapsActivity.this, R.color.colorOrangeDark)));
         } else {
             // Dark Primary Color GREEN
-            return Color.parseColor("#388E3C");
+            return Color.parseColor("#" + Integer.toHexString(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark)));
         }
     }
 
@@ -375,6 +465,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Snackbar snackbar = Snackbar.make(coordinatorLayout, text, Snackbar.LENGTH_LONG);
 
         snackbar.show();
+    }
+
+    private void collapseMenuFab() {
+        FloatingActionsMenu menuFab = (FloatingActionsMenu) findViewById(R.id.fab_menu);
+        menuFab.setVisibility(View.VISIBLE);
+        menuFab.collapse();
     }
 
     private boolean isShowingStation() {

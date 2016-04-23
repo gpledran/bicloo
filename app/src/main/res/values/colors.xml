@@ -17,4 +17,20 @@
 
     <!--BLUE-->
     <color name="colorAccent">#448AFF</color>
+
+    <!-- DARK COLORS -->
+    <color name="colorGreenDark">#388E3C</color>
+    <color name="colorOrangeDark">#F57C00</color>
+    <color name="colorRedDark">#D32F2F</color>
+
+    <!--FAB COLORS-->
+    <color name="black_semi_transparent">#B2000000</color>
+    <color name="background">#e5e5e5</color>
+    <color name="half_black">#808080</color>
+    <color name="white">#fafafa</color>
+    <color name="white_pressed">#f1f1f1</color>
+    <color name="pink">#e91e63</color>
+    <color name="pink_pressed">#ec407a</color>
+    <color name="blue_semi_transparent">#805677fc</color>
+    <color name="blue_semi_transparent_pressed">#80738ffe</color>
 </resources>
