@@ -222,7 +222,7 @@
             android:scaleType="center"
             app:fab_icon="@drawable/ic_directions_bike_green_700_24dp"
             app:fab_colorNormal="@color/white"
-            app:fab_title="Stations avec vélos disponibles"
+            app:fab_title="@string/available_bikes_filter_fab"
             app:fab_colorPressed="@color/white_pressed"
             app:fab_size="mini" />
 
@@ -233,37 +233,11 @@
             android:scaleType="center"
             app:fab_icon="@drawable/ic_access_time_green_700_24dp"
             app:fab_colorNormal="@color/white"
-            app:fab_title="Stations ouvertes"
+            app:fab_title="@string/status_open_filter_fab"
             app:fab_colorPressed="@color/white_pressed"
             app:fab_size="mini" />
 
     </com.getbase.floatingactionbutton.FloatingActionsMenu>
-
-    <!--<android.support.design.widget.FloatingActionButton-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:id="@+id/available_bikes_filter_fab"-->
-        <!--android:layout_gravity="bottom|end"-->
-        <!--android:visibility="visible"-->
-        <!--android:layout_margin="@dimen/fab_margin"-->
-        <!--android:clickable="true"-->
-        <!--android:elevation="6dp"-->
-        <!--android:tint="@color/colorAccent"-->
-        <!--app:backgroundTint="@android:color/white"-->
-        <!--android:src="@drawable/ic_directions_bike_black_48dp" />-->
-
-    <!--<android.support.design.widget.FloatingActionButton-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:id="@+id/status_filter_fab"-->
-        <!--android:layout_gravity="bottom|end"-->
-        <!--android:visibility="visible"-->
-        <!--android:layout_margin="@dimen/fab_margin"-->
-        <!--android:clickable="true"-->
-        <!--android:elevation="6dp"-->
-        <!--android:tint="@color/colorAccent"-->
-        <!--app:backgroundTint="@android:color/white"-->
-        <!--android:src="@drawable/ic_access_time_black_48dp" />-->
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/my_position_fab"

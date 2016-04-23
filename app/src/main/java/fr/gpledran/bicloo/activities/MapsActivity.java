@@ -160,50 +160,26 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         itineraryFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(), Process.myUid());
-                lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+            checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(), Process.myUid());
+            lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
 
-                if (lastLocation != null) {
-                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), 16.0f));
+            if (lastLocation != null) {
+                map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), 16.0f));
 
-                    // Hide BottomSheet
-                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+                // Hide BottomSheet
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
-                    // Async drawing itinerary
-                    String origin = String.valueOf(lastLocation.getLatitude()) + "," + String.valueOf(lastLocation.getLongitude());
-                    String destination = String.valueOf(selectedStation.getPosition().getLat()) + "," + String.valueOf(selectedStation.getPosition().getLng());
-                    new ItineraryTask(MapsActivity.this, coordinatorLayout, map, origin, destination, selectedStation.getName()).execute();
+                // Async drawing itinerary
+                String origin = String.valueOf(lastLocation.getLatitude()) + "," + String.valueOf(lastLocation.getLongitude());
+                String destination = String.valueOf(selectedStation.getPosition().getLat()) + "," + String.valueOf(selectedStation.getPosition().getLng());
+                new ItineraryTask(MapsActivity.this, coordinatorLayout, map, origin, destination, selectedStation.getName()).execute();
 
-                    // Hide Menu FAB
-                    FloatingActionsMenu menuFab = (FloatingActionsMenu) findViewById(R.id.fab_menu);
-                    menuFab.setVisibility(View.GONE);
-                }
+                // Hide Menu FAB
+                FloatingActionsMenu menuFab = (FloatingActionsMenu) findViewById(R.id.fab_menu);
+                menuFab.setVisibility(View.GONE);
+            }
             }
         });
-    }
-
-    private void refreshOpenStationsFab(com.getbase.floatingactionbutton.FloatingActionButton filterOpenStationsFab) {
-        if (isFilterOpenStationEnabled) {
-            filterOpenStationsFab.setIcon(R.drawable.ic_access_time_white_24dp);
-            filterOpenStationsFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
-            filterOpenStationsFab.setColorPressed(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
-        } else {
-            filterOpenStationsFab.setIcon(R.drawable.ic_access_time_green_700_24dp);
-            filterOpenStationsFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.white));
-            filterOpenStationsFab.setColorPressed(ContextCompat.getColor(MapsActivity.this, R.color.white));
-        }
-    }
-
-    private void refreshAvailableBikesFab(com.getbase.floatingactionbutton.FloatingActionButton filterAvailibleBikesFab) {
-        if (isFilterAvailableBikesEnabled) {
-            filterAvailibleBikesFab.setIcon(R.drawable.ic_directions_bike_white_24dp);
-            filterAvailibleBikesFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
-            filterAvailibleBikesFab.setColorPressed(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
-        } else {
-            filterAvailibleBikesFab.setIcon(R.drawable.ic_directions_bike_green_700_24dp);
-            filterAvailibleBikesFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.white));
-            filterAvailibleBikesFab.setColorPressed(ContextCompat.getColor(MapsActivity.this, R.color.white));
-        }
     }
 
     /**
@@ -478,5 +454,29 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
 
         return !(selectedStation == null || bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN);
+    }
+
+    private void refreshOpenStationsFab(com.getbase.floatingactionbutton.FloatingActionButton filterOpenStationsFab) {
+        if (isFilterOpenStationEnabled) {
+            filterOpenStationsFab.setIcon(R.drawable.ic_access_time_white_24dp);
+            filterOpenStationsFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
+            filterOpenStationsFab.setColorPressed(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
+        } else {
+            filterOpenStationsFab.setIcon(R.drawable.ic_access_time_green_700_24dp);
+            filterOpenStationsFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.white));
+            filterOpenStationsFab.setColorPressed(ContextCompat.getColor(MapsActivity.this, R.color.white));
+        }
+    }
+
+    private void refreshAvailableBikesFab(com.getbase.floatingactionbutton.FloatingActionButton filterAvailibleBikesFab) {
+        if (isFilterAvailableBikesEnabled) {
+            filterAvailibleBikesFab.setIcon(R.drawable.ic_directions_bike_white_24dp);
+            filterAvailibleBikesFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
+            filterAvailibleBikesFab.setColorPressed(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
+        } else {
+            filterAvailibleBikesFab.setIcon(R.drawable.ic_directions_bike_green_700_24dp);
+            filterAvailibleBikesFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.white));
+            filterAvailibleBikesFab.setColorPressed(ContextCompat.getColor(MapsActivity.this, R.color.white));
+        }
     }
 }
