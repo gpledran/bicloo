@@ -1,6 +1,7 @@
 package fr.gpledran.bicloo.activities;
 
 import android.Manifest;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Process;
 import android.support.annotation.NonNull;
@@ -84,7 +85,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
             public void onStateChanged(@NonNull View bottomSheet, int newState) {
-                if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN) {
+                if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN && selectedMarker != null) {
                     selectedMarker.hideInfoWindow();
                 }
             }
@@ -339,12 +340,27 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         availableBikeStands.setText(String.format("%s %s",
                 selectedStation.getAvailableBikeStands().toString(),
                 (selectedStation.getAvailableBikeStands() > 0 ? "places disponibles" : "place disponible")));
+        availableBikeStands.setTextColor(getAvailabilityColor(selectedStation.getAvailableBikeStands(), selectedStation.getBikeStands()));
 
         TextView availableBikes = (TextView) findViewById(R.id.station_available_bikes);
         assert availableBikes != null;
         availableBikes.setText(String.format("%s %s",
                 selectedStation.getAvailableBikes().toString(),
                 (selectedStation.getAvailableBikes() > 0 ? "vélos disponibles" : "vélo disponible")));
+        availableBikes.setTextColor(getAvailabilityColor(selectedStation.getAvailableBikes(), selectedStation.getBikeStands()));
+    }
+
+    private int getAvailabilityColor(int available, int max) {
+        if (available <= 2) {
+            // Dark Primary Color RED
+            return Color.parseColor("#D32F2F");
+        } else if (available > 2 && available < (max/2)) {
+            // Dark Primary Color ORANGE
+            return Color.parseColor("#F57C00");
+        } else {
+            // Dark Primary Color GREEN
+            return Color.parseColor("#388E3C");
+        }
     }
 
     private void showSnackbar(String text) {
