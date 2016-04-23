@@ -227,6 +227,17 @@
             app:fab_size="mini" />
 
         <com.getbase.floatingactionbutton.FloatingActionButton
+            android:id="@+id/available_bike_stands_filter_fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:scaleType="center"
+            app:fab_icon="@drawable/ic_local_parking_green_700_24dp"
+            app:fab_colorNormal="@color/white"
+            app:fab_title="@string/available_bike_stands_filter_fab"
+            app:fab_colorPressed="@color/white_pressed"
+            app:fab_size="mini" />
+
+        <com.getbase.floatingactionbutton.FloatingActionButton
             android:id="@+id/status_open_filter_fab"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

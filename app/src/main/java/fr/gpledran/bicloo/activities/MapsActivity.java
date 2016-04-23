@@ -66,6 +66,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Marker selectedMarker;
     private Map<String, Integer> hashMapMarkers;
     private boolean isFilterAvailableBikesEnabled = false;
+    private boolean isFilterAvailableBikeStandsEnabled = false;
     private boolean isFilterOpenStationEnabled = false;
 
     @Override
@@ -105,10 +106,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // My Location
         if (googleApiClient == null) {
             googleApiClient = new GoogleApiClient.Builder(this)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .addApi(LocationServices.API)
-                    .build();
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
         }
 
         // Available bikes FAB
@@ -120,6 +121,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 isFilterAvailableBikesEnabled = !isFilterAvailableBikesEnabled;
                 refreshStationsOnMap(filterStations());
                 refreshAvailableBikesFab(filterAvailibleBikesFab);
+            }
+        });
+
+        // Available bike stands FAB
+        final com.getbase.floatingactionbutton.FloatingActionButton filterAvailibleBikeStandsFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.available_bike_stands_filter_fab);
+        assert filterAvailibleBikeStandsFab != null;
+        filterAvailibleBikeStandsFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isFilterAvailableBikeStandsEnabled = !isFilterAvailableBikeStandsEnabled;
+                refreshStationsOnMap(filterStations());
+                refreshAvailableBikeStandsFab(filterAvailibleBikeStandsFab);
             }
         });
 
@@ -260,19 +273,42 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Station currentStation;
         for (int i=0; i<stationList.size(); i++) {
             currentStation = stationList.get(i);
-            if (isFilterAvailableBikesEnabled && isFilterOpenStationEnabled) {
+            if (isFilterAvailableBikesEnabled && isFilterAvailableBikeStandsEnabled && isFilterOpenStationEnabled) {
+                if (currentStation.getAvailableBikes() > 0 && currentStation.getAvailableBikeStands() > 0 && "OPEN".equalsIgnoreCase(currentStation.getStatus())) {
+                    filteredList.add(currentStation);
+                }
+            }
+            else if (isFilterAvailableBikesEnabled && isFilterAvailableBikeStandsEnabled) {
+                if (currentStation.getAvailableBikes() > 0 && currentStation.getAvailableBikeStands() > 0) {
+                    filteredList.add(currentStation);
+                }
+            }
+            else if (isFilterAvailableBikesEnabled && isFilterOpenStationEnabled) {
                 if (currentStation.getAvailableBikes() > 0 && "OPEN".equalsIgnoreCase(currentStation.getStatus())) {
                     filteredList.add(currentStation);
                 }
-            } else if (isFilterAvailableBikesEnabled) {
+            }
+            else if (isFilterAvailableBikeStandsEnabled && isFilterOpenStationEnabled) {
+                if (currentStation.getBikeStands() > 0 && "OPEN".equalsIgnoreCase(currentStation.getStatus())) {
+                    filteredList.add(currentStation);
+                }
+            }
+            else if (isFilterAvailableBikesEnabled) {
                 if (currentStation.getAvailableBikes() > 0) {
                     filteredList.add(currentStation);
                 }
-            } else if (isFilterOpenStationEnabled) {
+            }
+            else if (isFilterAvailableBikeStandsEnabled) {
+                if (currentStation.getAvailableBikeStands() > 0) {
+                    filteredList.add(currentStation);
+                }
+            }
+            else if (isFilterOpenStationEnabled) {
                 if ("OPEN".equalsIgnoreCase(currentStation.getStatus())) {
                     filteredList.add(currentStation);
                 }
-            } else {
+            }
+            else {
                 filteredList.add(currentStation);
             }
         }
@@ -477,6 +513,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             filterAvailibleBikesFab.setIcon(R.drawable.ic_directions_bike_green_700_24dp);
             filterAvailibleBikesFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.white));
             filterAvailibleBikesFab.setColorPressed(ContextCompat.getColor(MapsActivity.this, R.color.white));
+        }
+    }
+
+    private void refreshAvailableBikeStandsFab(com.getbase.floatingactionbutton.FloatingActionButton filterAvailibleBikeStandsFab) {
+        if (isFilterAvailableBikeStandsEnabled) {
+            filterAvailibleBikeStandsFab.setIcon(R.drawable.ic_local_parking_white_24dp);
+            filterAvailibleBikeStandsFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
+            filterAvailibleBikeStandsFab.setColorPressed(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
+        } else {
+            filterAvailibleBikeStandsFab.setIcon(R.drawable.ic_local_parking_green_700_24dp);
+            filterAvailibleBikeStandsFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.white));
+            filterAvailibleBikeStandsFab.setColorPressed(ContextCompat.getColor(MapsActivity.this, R.color.white));
         }
     }
 }

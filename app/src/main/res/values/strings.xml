@@ -12,5 +12,6 @@
     <string name="icon_parking">Places disponibles</string>
     <string name="icon_status">Etat de la station</string>
     <string name="available_bikes_filter_fab">Stations avec vélos disponibles</string>
+    <string name="available_bike_stands_filter_fab">Stations avec places disponibles</string>
     <string name="status_open_filter_fab">Stations ouvertes</string>
 </resources>
