@@ -17,6 +17,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -69,6 +70,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private boolean isFilterAvailableBikesEnabled = false;
     private boolean isFilterAvailableBikeStandsEnabled = false;
     private boolean isFilterOpenStationEnabled = false;
+    private boolean isShowItineraryFab = false;
+    private boolean isAnimateShrink = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,39 +90,67 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Obtain the CoordinateLayout
         final CoordinatorLayout coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinate_layout);
 
+        // Floating Action Button
+        final com.getbase.floatingactionbutton.FloatingActionButton filterAvailibleBikeStandsFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.available_bike_stands_filter_fab);
+        final com.getbase.floatingactionbutton.FloatingActionButton filterAvailibleBikesFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.available_bikes_filter_fab);
+        final com.getbase.floatingactionbutton.FloatingActionButton filterOpenStationsFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.status_open_filter_fab);
+        final com.getbase.floatingactionbutton.FloatingActionButton itineraryFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.itinerary_fab);
+        final FloatingActionButton positionFab = (FloatingActionButton) findViewById(R.id.my_position_fab);
+
+        // Animation
+        final Animation growAnimation = AnimationUtils.loadAnimation(this, R.anim.grow);
+        final Animation shrinkAnimation = AnimationUtils.loadAnimation(this, R.anim.shrink);
+        shrinkAnimation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                isAnimateShrink = true;
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                itineraryFab.setVisibility(View.GONE);
+                isAnimateShrink = false;
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
+        });
+
         // Obtain the BottomSheet
         final View bottomSheet = findViewById(R.id.bottom_sheet);
         final BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+        bottomSheetBehavior.setPeekHeight(600);
         bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
             public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                switch (newState) {
+                    case BottomSheetBehavior.STATE_EXPANDED:
+                    case BottomSheetBehavior.STATE_COLLAPSED:
+                        isShowItineraryFab = true;
+                        itineraryFab.setVisibility(View.VISIBLE);
+                        break;
 
-                if (newState == BottomSheetBehavior.STATE_HIDDEN && selectedMarker != null) {
-                    selectedMarker.hideInfoWindow();
-                    com.getbase.floatingactionbutton.FloatingActionButton itineraryFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.itinerary_fab);
-                    itineraryFab.setVisibility(View.GONE);
+                    case BottomSheetBehavior.STATE_HIDDEN:
+                        isShowItineraryFab = false;
+                        if (selectedMarker != null) {
+                            selectedMarker.hideInfoWindow();
+                        }
+                        break;
                 }
-
-//                if (newState == BottomSheetBehavior.STATE_DRAGGING) {
-//                    com.getbase.floatingactionbutton.FloatingActionButton itineraryFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.itinerary_fab);
-////                    itineraryFab.setAnimation(getResources().getAnimation(R.anim.fab_close));
-////                    itineraryFab.startAnimation(AnimationUtils.loadAnimation(MapsActivity.this, R.anim.fab_close));
-//                    itineraryFab.setVisibility(View.GONE);
-//                }
-//
-//                if (newState == BottomSheetBehavior.STATE_EXPANDED || newState == BottomSheetBehavior.STATE_COLLAPSED) {
-//                    com.getbase.floatingactionbutton.FloatingActionButton itineraryFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.itinerary_fab);
-//                    itineraryFab.setVisibility(View.VISIBLE);
-//                }
             }
 
             @Override
             public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-
+                Log.d("test", "onSlide: " + slideOffset);
+                if (slideOffset < -0.2 && isShowItineraryFab && !isAnimateShrink) {
+                    itineraryFab.startAnimation(shrinkAnimation);
+                }
+                else if (slideOffset >= -0.2 && !isShowItineraryFab) {
+                    itineraryFab.startAnimation(growAnimation);
+                }
             }
         });
-        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-        bottomSheetBehavior.setPeekHeight(600);
 
         // My Location
         if (googleApiClient == null) {
@@ -131,43 +162,39 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         // Available bikes FAB
-        final com.getbase.floatingactionbutton.FloatingActionButton filterAvailibleBikesFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.available_bikes_filter_fab);
         assert filterAvailibleBikesFab != null;
         filterAvailibleBikesFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 isFilterAvailableBikesEnabled = !isFilterAvailableBikesEnabled;
                 refreshStationsOnMap(filterStations());
-                refreshAvailableBikesFab(filterAvailibleBikesFab);
+                changeStateFabAvailableBikes(filterAvailibleBikesFab);
             }
         });
 
         // Available bike stands FAB
-        final com.getbase.floatingactionbutton.FloatingActionButton filterAvailibleBikeStandsFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.available_bike_stands_filter_fab);
         assert filterAvailibleBikeStandsFab != null;
         filterAvailibleBikeStandsFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 isFilterAvailableBikeStandsEnabled = !isFilterAvailableBikeStandsEnabled;
                 refreshStationsOnMap(filterStations());
-                refreshAvailableBikeStandsFab(filterAvailibleBikeStandsFab);
+                changeStateFabAvailableBikeStands(filterAvailibleBikeStandsFab);
             }
         });
 
         // Open stations FAB
-        final com.getbase.floatingactionbutton.FloatingActionButton filterOpenStationsFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.status_open_filter_fab);
         assert filterOpenStationsFab != null;
         filterOpenStationsFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 isFilterOpenStationEnabled = !isFilterOpenStationEnabled;
                 refreshStationsOnMap(filterStations());
-                refreshOpenStationsFab(filterOpenStationsFab);
+                changeStateFabOpenStations(filterOpenStationsFab);
             }
         });
 
         // My position FAB
-        FloatingActionButton positionFab = (FloatingActionButton) findViewById(R.id.my_position_fab);
         assert positionFab != null;
         positionFab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -186,7 +213,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
         // Itinerary FAB
-        final com.getbase.floatingactionbutton.FloatingActionButton itineraryFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.itinerary_fab);
         assert itineraryFab != null;
         itineraryFab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -208,9 +234,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 // Hide Menu FAB
                 FloatingActionsMenu menuFab = (FloatingActionsMenu) findViewById(R.id.fab_menu);
                 menuFab.setVisibility(View.GONE);
-
-                // Hide Itenary FAB
-                itineraryFab.setVisibility(View.GONE);
             }
             }
         });
@@ -440,10 +463,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Show only important's informations : name, available bikes and stands
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-
-        // Show Itenary FAB
-        com.getbase.floatingactionbutton.FloatingActionButton itineraryFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.itinerary_fab);
-        itineraryFab.setVisibility(View.VISIBLE);
     }
 
     private void refreshBottomSheetInformations() {
@@ -517,7 +536,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return !(selectedStation == null || bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN);
     }
 
-    private void refreshOpenStationsFab(com.getbase.floatingactionbutton.FloatingActionButton filterOpenStationsFab) {
+    private void changeStateFabOpenStations(com.getbase.floatingactionbutton.FloatingActionButton filterOpenStationsFab) {
         if (isFilterOpenStationEnabled) {
             filterOpenStationsFab.setIcon(R.drawable.ic_access_time_white_24dp);
             filterOpenStationsFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
@@ -529,7 +548,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private void refreshAvailableBikesFab(com.getbase.floatingactionbutton.FloatingActionButton filterAvailibleBikesFab) {
+    private void changeStateFabAvailableBikes(com.getbase.floatingactionbutton.FloatingActionButton filterAvailibleBikesFab) {
         if (isFilterAvailableBikesEnabled) {
             filterAvailibleBikesFab.setIcon(R.drawable.ic_directions_bike_white_24dp);
             filterAvailibleBikesFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
@@ -541,7 +560,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private void refreshAvailableBikeStandsFab(com.getbase.floatingactionbutton.FloatingActionButton filterAvailibleBikeStandsFab) {
+    private void changeStateFabAvailableBikeStands(com.getbase.floatingactionbutton.FloatingActionButton filterAvailibleBikeStandsFab) {
         if (isFilterAvailableBikeStandsEnabled) {
             filterAvailibleBikeStandsFab.setIcon(R.drawable.ic_local_parking_white_24dp);
             filterAvailibleBikeStandsFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
