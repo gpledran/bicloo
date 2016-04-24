@@ -29,20 +29,40 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
 
+        <meta-data
+            android:name="android.app.default_searchable"
+            android:value=".activities.SearchResultsActivity" />
+
         <activity
             android:name=".activities.MapsActivity"
-            android:screenOrientation="portrait"
             android:label="@string/title_activity_maps"
+            android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <!-- android:launchMode="singleTop" -->
+
+        <activity
+            android:name=".activities.SearchResultsActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.SEARCH" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+
             <meta-data
                 android:name="android.app.searchable"
                 android:resource="@xml/searchable" />
         </activity>
+
+        <provider
+            android:name=".provider.StationContentProvider"
+            android:authorities="fr.gpledran.bicloo.provider.StationContentProvider"
+            android:exported="true"
+            android:enabled="true" />
+
     </application>
 
 </manifest>

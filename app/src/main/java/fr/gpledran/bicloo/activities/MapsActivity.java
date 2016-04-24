@@ -13,6 +13,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
@@ -48,6 +49,7 @@ import fr.gpledran.bicloo.R;
 import fr.gpledran.bicloo.api.JCDecauxService;
 import fr.gpledran.bicloo.common.ItineraryTask;
 import fr.gpledran.bicloo.common.Toolbox;
+import fr.gpledran.bicloo.database.DatabaseHelper;
 import fr.gpledran.bicloo.model.Station;
 import fr.gpledran.bicloo.model.Stations;
 import fr.gpledran.bicloo.common.StationsDeserializerJson;
@@ -70,6 +72,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Station selectedStation;
     private Marker selectedMarker;
     private Map<String, Integer> hashMapMarkers;
+    private DatabaseHelper dbHelper;
+    private SimpleCursorAdapter adapter;
     private boolean isFilterAvailableBikesEnabled = false;
     private boolean isFilterAvailableBikeStandsEnabled = false;
     private boolean isFilterOpenStationEnabled = false;
@@ -80,6 +84,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
+        // SQLite database helper
+        dbHelper = new DatabaseHelper(this);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -145,7 +152,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             @Override
             public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-                Log.d("test", "onSlide: " + slideOffset);
                 if (slideOffset < -0.2 && isShowItineraryFab && !isAnimateShrink) {
                     itineraryFab.startAnimation(shrinkAnimation);
                 }
@@ -273,6 +279,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
+    // TODO : Mettre l'appel de l'API dans un thread pour enregistrer les données en base
     private void getStationsFromJCDecauxAPI() {
         Toolbox.showProgressBar(findViewById(R.id.progress_overlay));
 
@@ -299,7 +306,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     map.animateCamera(CameraUpdateFactory.newLatLngZoom(nantes, 15.0f));
                 }
 
+                // Add marker on map
                 refreshStationsOnMap(filterStations());
+
+                // Insert stations in database
+                dbHelper.insertStations(stationList);
+                Log.d("SQLITE", "Nombre de lignes : " + dbHelper.numberOfRows());
 
                 Toolbox.hideProgressBar(findViewById(R.id.progress_overlay));
             }
@@ -424,8 +436,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Associate searchable configuration with the SearchView
         SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-        SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+        final SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
         searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+        searchView.setIconifiedByDefault(false);
+        searchView.setSubmitButtonEnabled(false);
 
         return true;
     }
@@ -434,6 +448,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_search:
+                //onSearchRequested();
                 return true;
 
             case R.id.action_refresh:

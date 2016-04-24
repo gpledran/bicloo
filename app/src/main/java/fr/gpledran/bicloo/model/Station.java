@@ -5,6 +5,23 @@ import com.google.gson.annotations.SerializedName;
 
 public class Station {
 
+    public Station(Integer number, String name, String address, Position position, Boolean banking,
+                   Boolean bonus, String status, String contractName, Integer bikeStands,
+                   Integer availableBikeStands, Integer availableBikes, Integer lastUpdate) {
+        this.number = number;
+        this.name = name;
+        this.address = address;
+        this.position = position;
+        this.banking = banking;
+        this.bonus = bonus;
+        this.status = status;
+        this.contractName = contractName;
+        this.bikeStands = bikeStands;
+        this.availableBikeStands = availableBikeStands;
+        this.availableBikes = availableBikes;
+        this.lastUpdate = lastUpdate;
+    }
+
     @SerializedName("number")
     @Expose
     private Integer number;
