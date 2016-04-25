@@ -43,10 +43,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <!-- android:launchMode="singleTop" -->
 
         <activity
-            android:name=".activities.SearchResultsActivity">
+            android:name=".activities.SearchResultsActivity"
+            android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />
                 <category android:name="android.intent.category.DEFAULT" />

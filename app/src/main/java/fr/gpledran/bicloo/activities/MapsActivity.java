@@ -3,6 +3,7 @@ package fr.gpledran.bicloo.activities;
 import android.Manifest;
 import android.app.SearchManager;
 import android.content.Context;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Process;
@@ -13,16 +14,17 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.widget.SimpleCursorAdapter;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.inputmethod.EditorInfo;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -73,12 +75,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Marker selectedMarker;
     private Map<String, Integer> hashMapMarkers;
     private DatabaseHelper dbHelper;
-    private SimpleCursorAdapter adapter;
     private boolean isFilterAvailableBikesEnabled = false;
     private boolean isFilterAvailableBikeStandsEnabled = false;
     private boolean isFilterOpenStationEnabled = false;
     private boolean isShowItineraryFab = false;
     private boolean isAnimateShrink = false;
+    private boolean isModeItinerary = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -235,6 +237,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 // Hide BottomSheet
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
+                // Mode itinerary
+                isModeItinerary = true;
+
                 // Async drawing itinerary
                 String origin = String.valueOf(lastLocation.getLatitude()) + "," + String.valueOf(lastLocation.getLongitude());
                 String destination = String.valueOf(selectedStation.getPosition().getLat()) + "," + String.valueOf(selectedStation.getPosition().getLng());
@@ -387,9 +392,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Marker currentMarker;
         for (int i=0; i<stationList.size(); i++) {
             currentStation = stationList.get(i);
+            currentStation.setName(currentStation.getName().substring(currentStation.getName().indexOf("-")+1).trim());
             currentMarker = map.addMarker(new MarkerOptions()
                                 .position(new LatLng(currentStation.getPosition().getLat(), currentStation.getPosition().getLng()))
-                                .title(currentStation.getName().substring(currentStation.getName().indexOf("-")+1).trim())
+                                .title(currentStation.getName())
                                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));
 
             // Hashmap to retrieve station by marker id
@@ -400,6 +406,32 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 currentMarker.showInfoWindow();
             }
         }
+    }
+
+    private void showSelectedStationOnMap(Station station, int position) {
+        // Clear all markers, polylines and circle
+        map.clear();
+
+        // Instantiate HashMap use to show station in bottom sheet
+        hashMapMarkers = new HashMap<>();
+
+        Marker marker = map.addMarker(new MarkerOptions()
+                    .position(new LatLng(station.getPosition().getLat(), station.getPosition().getLng()))
+                    .title(station.getName())
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));
+
+        hashMapMarkers.put(marker.getId(), position);
+
+        // Center map on selected station ans show title
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 15.0f));
+        marker.showInfoWindow();
+
+        // Show Bottom Sheet
+        openBottomSheet(marker);
+
+        // Hide Menu FAB
+        FloatingActionsMenu menuFab = (FloatingActionsMenu) findViewById(R.id.fab_menu);
+        menuFab.setVisibility(View.GONE);
     }
 
     @Override
@@ -430,7 +462,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(final Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu, menu);
 
@@ -440,6 +472,41 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
         searchView.setIconifiedByDefault(false);
         searchView.setSubmitButtonEnabled(false);
+        searchView.setOnSuggestionListener(new SearchView.OnSuggestionListener() {
+            @Override
+            public boolean onSuggestionSelect(int position) {
+                return false;
+            }
+
+            @Override
+            public boolean onSuggestionClick(int position) {
+                Cursor cursor = (Cursor) searchView.getSuggestionsAdapter().getItem(position);
+                String stationName = cursor.getString(cursor.getColumnIndex(SearchManager.SUGGEST_COLUMN_TEXT_1));
+                for (int i=0; i < stationList.size(); i++) {
+                    if (stationList.get(i).getName().equalsIgnoreCase(stationName)) {
+                        // Show station on map and collapse searchview
+                        showSelectedStationOnMap(stationList.get(i), i);
+                        searchView.clearFocus();
+                        searchView.setIconified(true);
+                        menu.findItem(R.id.action_search).collapseActionView();
+                        break;
+                    }
+                }
+                return true;
+            }
+        });
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                // Prevent search keyboard action
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return true;
+            }
+        });
 
         return true;
     }
@@ -460,6 +527,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     refreshBottomSheetInformations();
                 }
 
+                // Not showing itinerary
+                isModeItinerary = false;
+
                 // Menu FAB
                 collapseMenuFab();
                 return true;
@@ -476,7 +546,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
 
         // Don't show bottom sheet on user's location marker
-        if (myMarker != null && myMarker.equals(marker)) {
+        if ((myMarker != null && myMarker.equals(marker)) || isModeItinerary) {
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
             return;
         }

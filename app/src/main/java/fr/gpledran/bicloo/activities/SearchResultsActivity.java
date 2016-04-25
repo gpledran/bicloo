@@ -9,7 +9,6 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import fr.gpledran.bicloo.provider.StationContentProvider;
 
 public class SearchResultsActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
@@ -18,29 +17,15 @@ public class SearchResultsActivity extends AppCompatActivity implements LoaderMa
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Log.d("SEARCH_ACTIVITY", "Recherche en cours...");
-
         handleIntent(getIntent());
     }
 
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-
-        handleIntent(intent);
-    }
-
     private void handleIntent(Intent intent) {
-        // If this activity is invoked by selecting an item from Suggestion of Search dialog or
-        // from listview of SearchActivity
-        if(intent.getAction().equals(Intent.ACTION_VIEW)){
-            Intent stationIntent = new Intent(this, MapsActivity.class);
-            stationIntent.setData(intent.getData());
-            startActivity(stationIntent);
-            finish();
-        } else if (intent.getAction().equals(Intent.ACTION_SEARCH)) { // If this activity is invoked, when user presses "Go" in the Keyboard of Search Dialog
-            String query = intent.getStringExtra(SearchManager.QUERY);
-            doSearch(query);
+        switch (intent.getAction()) {
+            case Intent.ACTION_SEARCH:
+                String query = intent.getStringExtra(SearchManager.QUERY);
+                doSearch(query);
+                break;
         }
     }
 
