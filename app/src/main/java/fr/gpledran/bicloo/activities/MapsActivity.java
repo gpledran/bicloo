@@ -209,15 +209,20 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         positionFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(), Process.myUid());
-                lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+                if (Toolbox.isLocationAvailable(MapsActivity.this)) {
+                    checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(), Process.myUid());
+                    lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
 
-                if (lastLocation != null) {
-                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), 16.0f));
-                    if (myMarker != null) {
-                        myMarker.remove();
+                    if (lastLocation != null) {
+                        map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), 16.0f));
+                        if (myMarker != null) {
+                            myMarker.remove();
+                        }
+                        myMarker = map.addMarker(new MarkerOptions().position(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude())));
                     }
-                    myMarker = map.addMarker(new MarkerOptions().position(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude())));
+                }
+                else {
+                    showSnackbar("GPS désactivé");
                 }
             }
         });
@@ -227,27 +232,33 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         itineraryFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-            checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(), Process.myUid());
-            lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
-
-            if (lastLocation != null) {
-                map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), 16.0f));
-
                 // Hide BottomSheet
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
-                // Mode itinerary
-                isModeItinerary = true;
+                // Check GPS
+                if (Toolbox.isLocationAvailable(MapsActivity.this)) {
+                    checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(), Process.myUid());
+                    lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
 
-                // Async drawing itinerary
-                String origin = String.valueOf(lastLocation.getLatitude()) + "," + String.valueOf(lastLocation.getLongitude());
-                String destination = String.valueOf(selectedStation.getPosition().getLat()) + "," + String.valueOf(selectedStation.getPosition().getLng());
-                new ItineraryTask(MapsActivity.this, coordinatorLayout, map, origin, destination, selectedStation.getName()).execute();
+                    if (lastLocation != null) {
+                        map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), 16.0f));
 
-                // Hide Menu FAB
-                FloatingActionsMenu menuFab = (FloatingActionsMenu) findViewById(R.id.fab_menu);
-                menuFab.setVisibility(View.GONE);
-            }
+                        // Mode itinerary
+                        isModeItinerary = true;
+
+                        // Async drawing itinerary
+                        String origin = String.valueOf(lastLocation.getLatitude()) + "," + String.valueOf(lastLocation.getLongitude());
+                        String destination = String.valueOf(selectedStation.getPosition().getLat()) + "," + String.valueOf(selectedStation.getPosition().getLng());
+                        new ItineraryTask(MapsActivity.this, coordinatorLayout, map, origin, destination, selectedStation.getName()).execute();
+
+                        // Hide Menu FAB
+                        FloatingActionsMenu menuFab = (FloatingActionsMenu) findViewById(R.id.fab_menu);
+                        menuFab.setVisibility(View.GONE);
+                    }
+                }
+                else {
+                    showSnackbar("GPS désactivé");
+                }
             }
         });
     }
