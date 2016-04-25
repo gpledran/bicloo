@@ -106,7 +106,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         final com.getbase.floatingactionbutton.FloatingActionButton filterAvailibleBikesFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.available_bikes_filter_fab);
         final com.getbase.floatingactionbutton.FloatingActionButton filterOpenStationsFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.status_open_filter_fab);
         final com.getbase.floatingactionbutton.FloatingActionButton itineraryFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.itinerary_fab);
-        final FloatingActionButton positionFab = (FloatingActionButton) findViewById(R.id.my_position_fab);
+        final com.getbase.floatingactionbutton.FloatingActionButton positionFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.my_position_fab);
 
         // Animation
         final Animation growAnimation = AnimationUtils.loadAnimation(this, R.anim.grow);
