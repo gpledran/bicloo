@@ -18,13 +18,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.view.inputmethod.EditorInfo;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -49,6 +47,7 @@ import java.util.Map;
 
 import fr.gpledran.bicloo.R;
 import fr.gpledran.bicloo.api.JCDecauxService;
+import fr.gpledran.bicloo.common.DatabaseTask;
 import fr.gpledran.bicloo.common.ItineraryTask;
 import fr.gpledran.bicloo.common.Toolbox;
 import fr.gpledran.bicloo.database.DatabaseHelper;
@@ -74,7 +73,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Station selectedStation;
     private Marker selectedMarker;
     private Map<String, Integer> hashMapMarkers;
-    private DatabaseHelper dbHelper;
     private boolean isFilterAvailableBikesEnabled = false;
     private boolean isFilterAvailableBikeStandsEnabled = false;
     private boolean isFilterOpenStationEnabled = false;
@@ -86,9 +84,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-
-        // SQLite database helper
-        dbHelper = new DatabaseHelper(this);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -273,13 +268,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-            selectedMarker = marker;
-            selectedMarker.showInfoWindow();
-            map.animateCamera(CameraUpdateFactory.newLatLngZoom(selectedMarker.getPosition(), 15.0f));
+                selectedMarker = marker;
+                selectedMarker.showInfoWindow();
+                map.animateCamera(CameraUpdateFactory.newLatLngZoom(selectedMarker.getPosition(), 15.0f));
 
-            collapseMenuFab();
-            openBottomSheet(marker);
-            return true;
+                collapseMenuFab();
+                openBottomSheet(marker);
+                return true;
             }
         });
     }
@@ -314,9 +309,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 // Add marker on map
                 refreshStationsOnMap(filterStations());
 
-                // Insert stations in database
-                dbHelper.insertStations(stationList);
-                Log.d("SQLITE", "Nombre de lignes : " + dbHelper.numberOfRows());
+                // Async insert stations in database
+                new DatabaseTask(MapsActivity.this, stationList).execute();
 
                 Toolbox.hideProgressBar(findViewById(R.id.progress_overlay));
             }

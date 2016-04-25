@@ -53,12 +53,10 @@ public class ItineraryTask extends AsyncTask<Void, Integer, Boolean> {
     @Override
     protected void onPreExecute() {
         Toolbox.showProgressBar(coordinatorLayout.findViewById(R.id.progress_overlay));
-//        Snackbar snackbar = Snackbar.make(coordinatorLayout, TOAST_MSG, Snackbar.LENGTH_LONG);
-//        snackbar.show();
     }
 
     @Override
-    protected Boolean doInBackground(Void... params) {
+    protected Boolean doInBackground(Void... voids) {
         try {
             // URL to call
             final StringBuilder url = new StringBuilder("http://maps.googleapis.com/maps/api/directions/xml?sensor=false&language=fr&mode=walking");
