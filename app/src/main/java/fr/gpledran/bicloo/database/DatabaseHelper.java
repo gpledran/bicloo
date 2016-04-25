@@ -8,7 +8,6 @@ import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -130,11 +129,42 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return res;
     }
 
-    public Cursor getAllStations() {
+    public List<Station> getAllStations() {
+        List<Station> stationList = new ArrayList<>();
+
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor res =  db.rawQuery( "SELECT * FROM " + STATION_TABLE_NAME, null );
+        Cursor cursor =  db.rawQuery( "SELECT * FROM " + STATION_TABLE_NAME, null );
+
+        if (cursor.moveToFirst()) {
+            do {
+                String objectName = cursor.getString(cursor.getColumnIndex(STATION_COLUMN_NAME));
+                Station station = new Station(
+                        cursor.getInt(cursor.getColumnIndex(STATION_COLUMN_NUMBER)),
+                        cursor.getString(cursor.getColumnIndex(STATION_COLUMN_NAME)),
+                        cursor.getString(cursor.getColumnIndex(STATION_COLUMN_ADDRESS)),
+                        new Position(
+                                cursor.getDouble(cursor.getColumnIndex(STATION_COLUMN_LAT)),
+                                cursor.getDouble(cursor.getColumnIndex(STATION_COLUMN_LNG))
+                        ),
+                        cursor.getInt(cursor.getColumnIndex(STATION_COLUMN_BANKING)) == 1,
+                        cursor.getInt(cursor.getColumnIndex(STATION_COLUMN_BONUS)) == 1,
+                        cursor.getString(cursor.getColumnIndex(STATION_COLUMN_STATUS)),
+                        cursor.getString(cursor.getColumnIndex(STATION_COLUMN_CONTRACT_NAME)),
+                        cursor.getInt(cursor.getColumnIndex(STATION_COLUMN_BIKE_STANDS)),
+                        cursor.getInt(cursor.getColumnIndex(STATION_COLUMN_AVAILABLE_BIKE_STANDS)),
+                        cursor.getInt(cursor.getColumnIndex(STATION_COLUMN_AVAILABLE_BIKES)),
+                        cursor.getInt(cursor.getColumnIndex(STATION_COLUMN_LAST_UPDATE))
+                );
+
+                stationList.add(station);
+
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
         db.close();
-        return res;
+
+        return stationList;
     }
 
     public Cursor getStations(String[] selectionArgs){
@@ -179,47 +209,5 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         );
 
         return cursor;
-    }
-
-    public List<Station> read(String searchText) {
-        List<Station> stationList = new ArrayList<>();
-
-        String query = "SELECT * FROM " + STATION_TABLE_NAME +
-                       "WHERE " + STATION_TABLE_NAME + " LIKE '%" + searchText + "%'" +
-                       "ORDER BY " + STATION_TABLE_NAME + " DESC";
-
-        SQLiteDatabase db = this.getWritableDatabase();
-        Cursor cursor = db.rawQuery(query, null);
-
-        if (cursor.moveToFirst()) {
-            do {
-                String objectName = cursor.getString(cursor.getColumnIndex(STATION_COLUMN_NAME));
-                Station station = new Station(
-                        cursor.getInt(cursor.getColumnIndex(STATION_COLUMN_NUMBER)),
-                        cursor.getString(cursor.getColumnIndex(STATION_COLUMN_NAME)),
-                        cursor.getString(cursor.getColumnIndex(STATION_COLUMN_ADDRESS)),
-                        new Position(
-                                cursor.getDouble(cursor.getColumnIndex(STATION_COLUMN_LAT)),
-                                cursor.getDouble(cursor.getColumnIndex(STATION_COLUMN_LNG))
-                        ),
-                        cursor.getInt(cursor.getColumnIndex(STATION_COLUMN_BANKING)) == 1,
-                        cursor.getInt(cursor.getColumnIndex(STATION_COLUMN_BONUS)) == 1,
-                        cursor.getString(cursor.getColumnIndex(STATION_COLUMN_STATUS)),
-                        cursor.getString(cursor.getColumnIndex(STATION_COLUMN_CONTRACT_NAME)),
-                        cursor.getInt(cursor.getColumnIndex(STATION_COLUMN_BIKE_STANDS)),
-                        cursor.getInt(cursor.getColumnIndex(STATION_COLUMN_AVAILABLE_BIKE_STANDS)),
-                        cursor.getInt(cursor.getColumnIndex(STATION_COLUMN_AVAILABLE_BIKES)),
-                        cursor.getInt(cursor.getColumnIndex(STATION_COLUMN_LAST_UPDATE))
-                );
-
-                stationList.add(station);
-
-            } while (cursor.moveToNext());
-        }
-
-        cursor.close();
-        db.close();
-
-        return stationList;
     }
 }

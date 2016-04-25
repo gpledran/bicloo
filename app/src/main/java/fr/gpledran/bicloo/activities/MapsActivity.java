@@ -67,6 +67,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private GoogleMap map;
     private GoogleApiClient googleApiClient;
+    private DatabaseHelper dbHelper;
     private Location lastLocation;
     private List<Station> stationList;
     private Marker myMarker;
@@ -84,6 +85,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
+        // SQLite database helper
+        dbHelper = new DatabaseHelper(this);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -262,7 +266,24 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         map = googleMap;
 
         // Get stations from API
-        getStationsFromJCDecauxAPI();
+        if (Toolbox.isNetworkAvailable(this)) {
+            getStationsFromJCDecauxAPI();
+        }
+        else {
+            // Get Stations for SQLite databse
+            stationList = dbHelper.getAllStations();
+
+            if (stationList.size() > 0) {
+                // Center map & show stations
+                LatLng nantes = new LatLng(47.2185256, -1.55408);
+                map.animateCamera(CameraUpdateFactory.newLatLngZoom(nantes, 15.0f));
+                refreshStationsOnMap(stationList);
+                showSnackbar("Mode hors connexion");
+            }
+            else {
+                showSnackbar("Connexion internet nécessaire au premier lancement de l'application");
+            }
+        }
 
         // Marker click listener
         map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
@@ -279,7 +300,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
-    // TODO : Mettre l'appel de l'API dans un thread pour enregistrer les données en base
     private void getStationsFromJCDecauxAPI() {
         Toolbox.showProgressBar(findViewById(R.id.progress_overlay));
 
@@ -514,19 +534,28 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return true;
 
             case R.id.action_refresh:
-                // Get stations from API
-                getStationsFromJCDecauxAPI();
+                if (Toolbox.isNetworkAvailable(this)) {
+                    // Get stations from API
+                    getStationsFromJCDecauxAPI();
 
-                // Refresh selected stations informations
-                if (isShowingStation()) {
-                    refreshBottomSheetInformations();
+                    // Refresh selected stations informations
+                    if (isShowingStation()) {
+                        refreshBottomSheetInformations();
+                    }
+
+                    // Not showing itinerary
+                    isModeItinerary = false;
+
+                    // Menu FAB
+                    collapseMenuFab();
                 }
-
-                // Not showing itinerary
-                isModeItinerary = false;
-
-                // Menu FAB
-                collapseMenuFab();
+                else {
+                    // Hide BottomSheet and inform no internet connection
+                    View bottomSheet = findViewById(R.id.bottom_sheet);
+                    BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+                    showSnackbar("Pas de connexion internet");
+                }
                 return true;
 
             default:
