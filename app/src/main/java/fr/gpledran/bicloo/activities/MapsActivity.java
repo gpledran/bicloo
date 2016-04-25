@@ -648,7 +648,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void showSnackbar(String text) {
         CoordinatorLayout coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinate_layout);
         Snackbar snackbar = Snackbar.make(coordinatorLayout, text, Snackbar.LENGTH_LONG);
-
+        snackbar.setDuration(Snackbar.LENGTH_LONG);
         snackbar.show();
     }
 
