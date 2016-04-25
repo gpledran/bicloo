@@ -25,7 +25,7 @@ public class DatabaseTask extends AsyncTask<Void, Integer, Boolean> {
             // SQL Lite helper
             DatabaseHelper dbHelper = new DatabaseHelper(context);
 
-            // Insert stations 
+            // Insert stations
             dbHelper.insertStations(stationList);
             return true;
         }

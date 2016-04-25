@@ -374,7 +374,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return filteredList;
     }
 
-    private void refreshStationsOnMap(List<Station> stationList) {
+    private void refreshStationsOnMap(List<Station> filteredList) {
         // Clear all markers, polylines and circle
         map.clear();
 
@@ -384,8 +384,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Add markers station
         Station currentStation;
         Marker currentMarker;
-        for (int i=0; i<stationList.size(); i++) {
-            currentStation = stationList.get(i);
+        for (int i=0; i<filteredList.size(); i++) {
+            currentStation = filteredList.get(i);
             currentStation.setName(currentStation.getName().substring(currentStation.getName().indexOf("-")+1).trim());
             currentMarker = map.addMarker(new MarkerOptions()
                                 .position(new LatLng(currentStation.getPosition().getLat(), currentStation.getPosition().getLng()))
@@ -393,7 +393,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));
 
             // Hashmap to retrieve station by marker id
-            hashMapMarkers.put(currentMarker.getId(), i);
+            // Search position on full station list because method receives a filtered list
+            hashMapMarkers.put(currentMarker.getId(), stationList.indexOf(currentStation));
 
             // On refresh action, show title on marker station selected
             if (isShowingStation() && currentStation.getNumber().equals(selectedStation.getNumber())) {
