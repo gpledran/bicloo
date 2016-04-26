@@ -3,15 +3,21 @@ package fr.gpledran.bicloo.activities;
 import android.Manifest;
 import android.app.SearchManager;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.location.Location;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Process;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
@@ -25,9 +31,13 @@ import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.getbase.floatingactionbutton.FloatingActionsMenu;
+import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -65,12 +75,15 @@ import retrofit.converter.GsonConverter;
  */
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener {
+        GoogleApiClient.OnConnectionFailedListener,
+        LocationListener {
 
-    private final String STATUS_OPEN = "OPEN";
+    private static final int REQUEST_FINE_LOCATION = 0;
+    private static final String STATUS_OPEN = "OPEN";
 
     private GoogleMap map;
     private GoogleApiClient googleApiClient;
+    private LocationRequest locationRequest;
     private DatabaseHelper dbHelper;
     private Location lastLocation;
     private List<Station> stationList;
@@ -91,6 +104,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
+        // Chack location permissions
+        checkLocationPermission();
+
         // SQLite database helper
         dbHelper = new DatabaseHelper(this);
 
@@ -107,11 +123,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         final CoordinatorLayout coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinate_layout);
 
         // Floating Action Button
-        final com.getbase.floatingactionbutton.FloatingActionButton filterAvailibleBikeStandsFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.available_bike_stands_filter_fab);
-        final com.getbase.floatingactionbutton.FloatingActionButton filterAvailibleBikesFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.available_bikes_filter_fab);
-        final com.getbase.floatingactionbutton.FloatingActionButton filterOpenStationsFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.status_open_filter_fab);
-        final com.getbase.floatingactionbutton.FloatingActionButton itineraryFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.itinerary_fab);
-        final com.getbase.floatingactionbutton.FloatingActionButton positionFab = (com.getbase.floatingactionbutton.FloatingActionButton) findViewById(R.id.my_position_fab);
+        final FloatingActionButton filterAvailibleBikeStandsFab = (FloatingActionButton) findViewById(R.id.available_bike_stands_filter_fab);
+        final FloatingActionButton filterAvailibleBikesFab = (FloatingActionButton) findViewById(R.id.available_bikes_filter_fab);
+        final FloatingActionButton filterOpenStationsFab = (FloatingActionButton) findViewById(R.id.status_open_filter_fab);
+        final FloatingActionButton itineraryFab = (FloatingActionButton) findViewById(R.id.itinerary_fab);
+        final FloatingActionButton positionFab = (FloatingActionButton) findViewById(R.id.my_position_fab);
 
         // Animation
         final Animation growAnimation = AnimationUtils.loadAnimation(this, R.anim.grow);
@@ -129,7 +145,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
 
             @Override
-            public void onAnimationRepeat(Animation animation) {}
+            public void onAnimationRepeat(Animation animation) {
+            }
         });
 
         // Obtain the BottomSheet
@@ -165,8 +182,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (!isModeOffline) {
                     if (slideOffset < -0.2 && isShowItineraryFab && !isAnimateShrink) {
                         itineraryFab.startAnimation(shrinkAnimation);
-                    }
-                    else if (slideOffset >= -0.2 && !isShowItineraryFab) {
+                    } else if (slideOffset >= -0.2 && !isShowItineraryFab) {
                         itineraryFab.startAnimation(growAnimation);
                     }
                 }
@@ -175,11 +191,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // My Location
         if (googleApiClient == null) {
+            // ATTENTION: This "addApi(AppIndex.API)"was auto-generated to implement the App Indexing API.
+            // See https://g.co/AppIndexing/AndroidStudio for more information.
             googleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .addApi(AppIndex.API).build();
         }
 
         // Available bikes FAB
@@ -220,20 +238,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         positionFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (Toolbox.isLocationAvailable(MapsActivity.this)) {
-                    checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(), Process.myUid());
-                    lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
-
-                    if (lastLocation != null) {
+                // Check Permission
+                if (checkLocationPermission()) {
+                    if (Toolbox.isLocationAvailable(MapsActivity.this) && lastLocation != null) {
                         map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), 16.0f));
                         if (myMarker != null) {
                             myMarker.remove();
                         }
                         myMarker = map.addMarker(new MarkerOptions().position(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude())));
+                    } else {
+                        showSnackbar("Localisation désactivée");
                     }
-                }
-                else {
-                    showSnackbar("Localisation désactivée");
                 }
             }
         });
@@ -246,12 +261,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 // Hide BottomSheet
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
-                // Check GPS
-                if (Toolbox.isLocationAvailable(MapsActivity.this)) {
-                    checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(), Process.myUid());
-                    lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
-
-                    if (lastLocation != null) {
+                // Check Permission
+                if (checkLocationPermission()) {
+                    // Check GPS & location
+                    if (Toolbox.isLocationAvailable(MapsActivity.this) && lastLocation != null) {
                         map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), 16.0f));
 
                         // Mode itinerary
@@ -265,10 +278,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         // Hide Menu FAB
                         FloatingActionsMenu menuFab = (FloatingActionsMenu) findViewById(R.id.fab_menu);
                         menuFab.setVisibility(View.GONE);
+                    } else {
+                        showSnackbar("Localisation désactivée");
                     }
-                }
-                else {
-                    showSnackbar("GPS désactivé");
                 }
             }
         });
@@ -480,14 +492,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     protected void onStart() {
-        googleApiClient.connect();
         super.onStart();
+        googleApiClient.connect();
     }
 
     @Override
     protected void onStop() {
-        googleApiClient.disconnect();
         super.onStop();
+        if (googleApiClient.isConnected()) {
+            googleApiClient.disconnect();
+        }
     }
 
     @Override
@@ -500,7 +514,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onConnected(Bundle bundle) {
-        //showSnackbar("Connecté");
+        startLocationUpdates();
     }
 
     @Override
@@ -511,6 +525,97 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         showSnackbar("Pas de connexion aux services Google");
+    }
+
+    protected void startLocationUpdates() {
+        if (Build.VERSION.SDK_INT < 23 || ActivityCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            // Create the location request
+            locationRequest = LocationRequest.create()
+                    .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                    .setInterval(10000)
+                    .setFastestInterval(2000);
+
+            // Request location updates
+            checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(), Process.myUid());
+            LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
+        }
+    }
+
+    private boolean checkLocationPermission() {
+        if (Build.VERSION.SDK_INT >= 23 && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+        {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION))
+            {
+                showExplainPermissionSnackbar();
+            }
+            else {
+                askForLocationPermission();
+            }
+            return false;
+        }
+        else { return true; }
+    }
+
+    private void askForLocationPermission()
+    {
+        ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.ACCESS_FINE_LOCATION }, REQUEST_FINE_LOCATION);
+    }
+
+    private void showParamPermissionSnackbar()
+    {
+        CoordinatorLayout coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinate_layout);
+        Snackbar.make(coordinatorLayout, "Vous avez désactivé la permission Localisation", Snackbar.LENGTH_LONG).setAction("Paramètres", new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View view)
+            {
+                final Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                final Uri uri = Uri.fromParts("package", getApplicationContext().getPackageName(), null);
+                intent.setData(uri);
+                startActivity(intent);
+            }
+        }).show();
+    }
+
+    private void showExplainPermissionSnackbar()
+    {
+        CoordinatorLayout coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinate_layout);
+        Snackbar.make(coordinatorLayout, "Permission Localisation requise", Snackbar.LENGTH_LONG).setAction("Activer", new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View view)
+            {
+                askForLocationPermission();
+            }
+        }).show();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_FINE_LOCATION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    startLocationUpdates();
+                }
+                else if (ActivityCompat.shouldShowRequestPermissionRationale(this, permissions[0]) == false)
+                {
+                    showParamPermissionSnackbar();
+                }
+                else
+                {
+                    showExplainPermissionSnackbar();
+                }
+                return;
+            }
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+
+    @Override
+    public void onLocationChanged(Location location) {
+        lastLocation = location;
     }
 
     @Override
@@ -719,7 +824,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return !(selectedStation == null || bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN);
     }
 
-    private void changeStateFabOpenStations(com.getbase.floatingactionbutton.FloatingActionButton filterOpenStationsFab) {
+    private void changeStateFabOpenStations(FloatingActionButton filterOpenStationsFab) {
         if (isFilterOpenStationEnabled) {
             filterOpenStationsFab.setIcon(R.drawable.ic_access_time_white_24dp);
             filterOpenStationsFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
@@ -732,7 +837,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private void changeStateFabAvailableBikes(com.getbase.floatingactionbutton.FloatingActionButton filterAvailibleBikesFab) {
+    private void changeStateFabAvailableBikes(FloatingActionButton filterAvailibleBikesFab) {
         if (isFilterAvailableBikesEnabled) {
             filterAvailibleBikesFab.setIcon(R.drawable.ic_directions_bike_white_24dp);
             filterAvailibleBikesFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
@@ -745,7 +850,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private void changeStateFabAvailableBikeStands(com.getbase.floatingactionbutton.FloatingActionButton filterAvailibleBikeStandsFab) {
+    private void changeStateFabAvailableBikeStands(FloatingActionButton filterAvailibleBikeStandsFab) {
         if (isFilterAvailableBikeStandsEnabled) {
             filterAvailibleBikeStandsFab.setIcon(R.drawable.ic_local_parking_white_24dp);
             filterAvailibleBikeStandsFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
