@@ -222,7 +222,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
                 }
                 else {
-                    showSnackbar("GPS désactivé");
+                    showSnackbar("Localisation désactivée");
                 }
             }
         });
@@ -473,6 +473,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
+    public void onBackPressed() {
+        // Close app if bottom sheet already hidden
+        if (!closeBottomSheet()) {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
     public void onConnected(Bundle bundle) {
         //showSnackbar("Connecté");
     }
@@ -562,9 +570,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
                 else {
                     // Hide BottomSheet and inform no internet connection
-                    View bottomSheet = findViewById(R.id.bottom_sheet);
-                    BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
-                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+                    closeBottomSheet();
                     showSnackbar("Pas de connexion internet");
                 }
                 return true;
@@ -574,6 +580,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return super.onOptionsItemSelected(item);
 
         }
+    }
+
+    private boolean closeBottomSheet() {
+        View bottomSheet = findViewById(R.id.bottom_sheet);
+        BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+        if (bottomSheetBehavior.getState() != BottomSheetBehavior.STATE_HIDDEN) {
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+            return true;
+        }
+        return false;
     }
 
     private void openBottomSheet(Marker marker) {
