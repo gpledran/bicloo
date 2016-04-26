@@ -67,6 +67,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
 
+    private final String STATUS_OPEN = "OPEN";
+
     private GoogleMap map;
     private GoogleApiClient googleApiClient;
     private DatabaseHelper dbHelper;
@@ -294,7 +296,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 showSnackbar("Mode hors connexion");
             }
             else {
-                showSnackbar("Connexion internet nécessaire au premier lancement de l'application");
+                showSnackbar("Connexion internet requise au premier lancement de l'application");
             }
         }
 
@@ -365,7 +367,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         for (int i=0; i<stationList.size(); i++) {
             currentStation = stationList.get(i);
             if (isFilterAvailableBikesEnabled && isFilterAvailableBikeStandsEnabled && isFilterOpenStationEnabled) {
-                if (currentStation.getAvailableBikes() > 0 && currentStation.getAvailableBikeStands() > 0 && "OPEN".equalsIgnoreCase(currentStation.getStatus())) {
+                if (currentStation.getAvailableBikes() > 0 && currentStation.getAvailableBikeStands() > 0 && STATUS_OPEN.equalsIgnoreCase(currentStation.getStatus())) {
                     filteredList.add(currentStation);
                 }
             }
@@ -375,12 +377,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
             else if (isFilterAvailableBikesEnabled && isFilterOpenStationEnabled) {
-                if (currentStation.getAvailableBikes() > 0 && "OPEN".equalsIgnoreCase(currentStation.getStatus())) {
+                if (currentStation.getAvailableBikes() > 0 && STATUS_OPEN.equalsIgnoreCase(currentStation.getStatus())) {
                     filteredList.add(currentStation);
                 }
             }
             else if (isFilterAvailableBikeStandsEnabled && isFilterOpenStationEnabled) {
-                if (currentStation.getAvailableBikeStands() > 0 && "OPEN".equalsIgnoreCase(currentStation.getStatus())) {
+                if (currentStation.getAvailableBikeStands() > 0 && STATUS_OPEN.equalsIgnoreCase(currentStation.getStatus())) {
                     filteredList.add(currentStation);
                 }
             }
@@ -395,7 +397,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
             else if (isFilterOpenStationEnabled) {
-                if ("OPEN".equalsIgnoreCase(currentStation.getStatus())) {
+                if (STATUS_OPEN.equalsIgnoreCase(currentStation.getStatus())) {
                     filteredList.add(currentStation);
                 }
             }
@@ -654,10 +656,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (available <= 2) {
             // Dark Primary Color RED
             return Color.parseColor("#" + Integer.toHexString(ContextCompat.getColor(MapsActivity.this, R.color.colorRedDark)));
-        } else if (available > 2 && available < (max/2)) {
+        }
+        else if (available > 2 && available < (max/2)) {
             // Dark Primary Color ORANGE
             return Color.parseColor("#" + Integer.toHexString(ContextCompat.getColor(MapsActivity.this, R.color.colorOrangeDark)));
-        } else {
+        }
+        else {
             // Dark Primary Color GREEN
             return Color.parseColor("#" + Integer.toHexString(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark)));
         }
@@ -688,7 +692,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             filterOpenStationsFab.setIcon(R.drawable.ic_access_time_white_24dp);
             filterOpenStationsFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
             filterOpenStationsFab.setColorPressed(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
-        } else {
+        }
+        else {
             filterOpenStationsFab.setIcon(R.drawable.ic_access_time_green_700_24dp);
             filterOpenStationsFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.white));
             filterOpenStationsFab.setColorPressed(ContextCompat.getColor(MapsActivity.this, R.color.white));
@@ -700,7 +705,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             filterAvailibleBikesFab.setIcon(R.drawable.ic_directions_bike_white_24dp);
             filterAvailibleBikesFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
             filterAvailibleBikesFab.setColorPressed(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
-        } else {
+        }
+        else {
             filterAvailibleBikesFab.setIcon(R.drawable.ic_directions_bike_green_700_24dp);
             filterAvailibleBikesFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.white));
             filterAvailibleBikesFab.setColorPressed(ContextCompat.getColor(MapsActivity.this, R.color.white));
@@ -712,7 +718,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             filterAvailibleBikeStandsFab.setIcon(R.drawable.ic_local_parking_white_24dp);
             filterAvailibleBikeStandsFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
             filterAvailibleBikeStandsFab.setColorPressed(ContextCompat.getColor(MapsActivity.this, R.color.colorGreenDark));
-        } else {
+        }
+        else {
             filterAvailibleBikeStandsFab.setIcon(R.drawable.ic_local_parking_green_700_24dp);
             filterAvailibleBikeStandsFab.setColorNormal(ContextCompat.getColor(MapsActivity.this, R.color.white));
             filterAvailibleBikeStandsFab.setColorPressed(ContextCompat.getColor(MapsActivity.this, R.color.white));

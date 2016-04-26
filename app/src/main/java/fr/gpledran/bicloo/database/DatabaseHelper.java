@@ -112,18 +112,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         StringBuilder query = new StringBuilder("CREATE TABLE ");
         query.append(STATION_TABLE_NAME).append("(");
         query.append(STATION_COLUMN_ID).append(" INTEGER PRIMARY KEY, ");
-        query.append(STATION_COLUMN_NUMBER).append(" INTEGER UNIQUE,");
+        query.append(STATION_COLUMN_NUMBER).append(" INTEGER UNIQUE, ");
         query.append(STATION_COLUMN_NAME).append(" TEXT, ");
         query.append(STATION_COLUMN_ADDRESS).append(" TEXT, ");
-        query.append(STATION_COLUMN_LAT).append(" REAL,");
-        query.append(STATION_COLUMN_LNG).append(" REAL,");
-        query.append(STATION_COLUMN_BANKING).append(" INTEGER,");
-        query.append(STATION_COLUMN_BONUS).append(" INTEGER,");
-        query.append(STATION_COLUMN_STATUS).append(" TEXT,");
-        query.append(STATION_COLUMN_CONTRACT_NAME).append(" TEXT,");
-        query.append(STATION_COLUMN_BIKE_STANDS).append(" INTEGER,");
-        query.append(STATION_COLUMN_AVAILABLE_BIKE_STANDS).append(" INTEGER,");
-        query.append(STATION_COLUMN_AVAILABLE_BIKES).append(" INTEGER,");
+        query.append(STATION_COLUMN_LAT).append(" REAL, ");
+        query.append(STATION_COLUMN_LNG).append(" REAL, ");
+        query.append(STATION_COLUMN_BANKING).append(" INTEGER, ");
+        query.append(STATION_COLUMN_BONUS).append(" INTEGER, ");
+        query.append(STATION_COLUMN_STATUS).append(" TEXT, ");
+        query.append(STATION_COLUMN_CONTRACT_NAME).append(" TEXT, ");
+        query.append(STATION_COLUMN_BIKE_STANDS).append(" INTEGER, ");
+        query.append(STATION_COLUMN_AVAILABLE_BIKE_STANDS).append(" INTEGER, ");
+        query.append(STATION_COLUMN_AVAILABLE_BIKES).append(" INTEGER, ");
         query.append(STATION_COLUMN_LAST_UPDATE).append(" INTEGER)");
 
         db.execSQL(query.toString());
