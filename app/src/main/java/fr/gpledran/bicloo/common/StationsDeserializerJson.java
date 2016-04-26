@@ -13,6 +13,9 @@ import java.lang.reflect.Type;
 import fr.gpledran.bicloo.model.Station;
 import fr.gpledran.bicloo.model.Stations;
 
+/**
+ * The type Stations deserializer json.
+ */
 public class StationsDeserializerJson implements JsonDeserializer<Stations> {
 
     @Override

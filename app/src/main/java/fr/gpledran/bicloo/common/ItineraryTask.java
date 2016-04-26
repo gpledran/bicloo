@@ -28,9 +28,11 @@ import com.google.android.gms.maps.model.PolylineOptions;
 
 import fr.gpledran.bicloo.R;
 
+/**
+ * The class Itinerary task.
+ */
 public class ItineraryTask extends AsyncTask<Void, Integer, Boolean> {
 
-    private static final String TOAST_MSG = "Calcul de l'itinéraire en cours";
     private static final String TOAST_ERR_MAJ = "Impossible de trouver un itinéraire";
 
     private Context context;
@@ -41,6 +43,16 @@ public class ItineraryTask extends AsyncTask<Void, Integer, Boolean> {
     private String title;
     private final ArrayList<LatLng> listLatLng = new ArrayList<LatLng>();
 
+    /**
+     * Instantiates a new Itinerary task.
+     *
+     * @param context           the context
+     * @param coordinatorLayout the coordinator layout
+     * @param gMap              the g map
+     * @param origin            the origin
+     * @param destination       the destination
+     * @param title             the title
+     */
     public ItineraryTask(final Context context, final CoordinatorLayout coordinatorLayout, final GoogleMap gMap, final String origin, final String destination, final String title) {
         this.context = context;
         this.coordinatorLayout = coordinatorLayout;

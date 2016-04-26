@@ -8,16 +8,35 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.view.View;
 
+/**
+ * The type Toolbox.
+ */
 public final class Toolbox {
 
+    /**
+     * Show progress bar.
+     *
+     * @param progressOverlay the progress overlay
+     */
     public static void showProgressBar(final View progressOverlay) {
         animateView(progressOverlay, View.VISIBLE, 0.4f, 200);
     }
 
+    /**
+     * Hide progress bar.
+     *
+     * @param progressOverlay the progress overlay
+     */
     public static void hideProgressBar(final View progressOverlay) {
         animateView(progressOverlay, View.GONE, 0, 200);
     }
 
+    /**
+     * Is network available boolean.
+     *
+     * @param context the context
+     * @return the boolean
+     */
     public static boolean isNetworkAvailable(final Context context) {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
@@ -27,6 +46,12 @@ public final class Toolbox {
         return false;
     }
 
+    /**
+     * Is location available boolean.
+     *
+     * @param context the context
+     * @return the boolean
+     */
     public static boolean isLocationAvailable(final Context context) {
         LocationManager lm = (LocationManager)context.getSystemService(Context.LOCATION_SERVICE);
         boolean gpsEnabled = false;

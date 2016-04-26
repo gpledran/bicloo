@@ -11,6 +11,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import fr.gpledran.bicloo.provider.StationContentProvider;
 
+/**
+ * The Search results activity.
+ */
 public class SearchResultsActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
     @Override

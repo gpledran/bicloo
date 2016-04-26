@@ -3,8 +3,17 @@ package fr.gpledran.bicloo.model;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
+/**
+ * The class Position.
+ */
 public class Position {
 
+    /**
+     * Instantiates a new Position.
+     *
+     * @param lat the lat
+     * @param lng the lng
+     */
     public Position(Double lat, Double lng) {
         this.lat = lat;
         this.lng = lng;

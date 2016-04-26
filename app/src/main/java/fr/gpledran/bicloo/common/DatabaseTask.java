@@ -9,11 +9,20 @@ import java.util.List;
 import fr.gpledran.bicloo.database.DatabaseHelper;
 import fr.gpledran.bicloo.model.Station;
 
+/**
+ * The class Database task.
+ */
 public class DatabaseTask extends AsyncTask<Void, Integer, Boolean> {
 
     private Context context;
     private List<Station> stationList = new ArrayList<>();
 
+    /**
+     * Instantiates a new Database task.
+     *
+     * @param context     the context
+     * @param stationList the station list
+     */
     public DatabaseTask(final Context context, final List<Station> stationList) {
         this.context = context;
         this.stationList = stationList;

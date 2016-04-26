@@ -3,8 +3,27 @@ package fr.gpledran.bicloo.model;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
+/**
+ * The class Station.
+ */
 public class Station {
 
+    /**
+     * Instantiates a new Station.
+     *
+     * @param number              the number
+     * @param name                the name
+     * @param address             the address
+     * @param position            the position
+     * @param banking             the banking
+     * @param bonus               the bonus
+     * @param status              the status
+     * @param contractName        the contract name
+     * @param bikeStands          the bike stands
+     * @param availableBikeStands the available bike stands
+     * @param availableBikes      the available bikes
+     * @param lastUpdate          the last update
+     */
     public Station(Integer number, String name, String address, Position position, Boolean banking,
                    Boolean bonus, String status, String contractName, Integer bikeStands,
                    Integer availableBikeStands, Integer availableBikes, Integer lastUpdate) {
