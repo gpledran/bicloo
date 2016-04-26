@@ -84,6 +84,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private boolean isShowItineraryFab = false;
     private boolean isAnimateShrink = false;
     private boolean isModeItinerary = false;
+    private boolean isModeOffline = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,7 +144,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     case BottomSheetBehavior.STATE_EXPANDED:
                     case BottomSheetBehavior.STATE_COLLAPSED:
                         isShowItineraryFab = true;
-                        itineraryFab.setVisibility(View.VISIBLE);
+                        // No itinerary in offline mode, because of calling google direction api
+                        if (!isModeOffline) {
+                            itineraryFab.setVisibility(View.VISIBLE);
+                        }
                         break;
 
                     case BottomSheetBehavior.STATE_HIDDEN:
@@ -157,11 +161,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             @Override
             public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-                if (slideOffset < -0.2 && isShowItineraryFab && !isAnimateShrink) {
-                    itineraryFab.startAnimation(shrinkAnimation);
-                }
-                else if (slideOffset >= -0.2 && !isShowItineraryFab) {
-                    itineraryFab.startAnimation(growAnimation);
+                // No itinerary in offline mode, because of calling google direction api
+                if (!isModeOffline) {
+                    if (slideOffset < -0.2 && isShowItineraryFab && !isAnimateShrink) {
+                        itineraryFab.startAnimation(shrinkAnimation);
+                    }
+                    else if (slideOffset >= -0.2 && !isShowItineraryFab) {
+                        itineraryFab.startAnimation(growAnimation);
+                    }
                 }
             }
         });
@@ -285,6 +292,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             getStationsFromJCDecauxAPI();
         }
         else {
+            // Offline Mode only on application loading
+            isModeOffline = true;
+
+            // Hide Menu FAB
+            FloatingActionsMenu menuFab = (FloatingActionsMenu) findViewById(R.id.fab_menu);
+            menuFab.setVisibility(View.GONE);
+
             // Get Stations for SQLite databse
             stationList = dbHelper.getAllStations();
 
@@ -558,6 +572,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             case R.id.action_refresh:
                 if (Toolbox.isNetworkAvailable(this)) {
+                    isModeOffline = false;
+
                     // Get stations from API
                     getStationsFromJCDecauxAPI();
 
@@ -625,16 +641,26 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         assert banking != null;
         banking.setText(selectedStation.getBanking() ? "Avec terminal de paiement" : "Sans terminal de paiement");
 
+
         TextView status = (TextView) findViewById(R.id.station_status);
         assert status != null;
-        status.setText("OPEN".equalsIgnoreCase(selectedStation.getStatus()) ? "Station ouverte" : "Station fermée");
+        if (!isModeOffline) {
+            status.setText(STATUS_OPEN.equalsIgnoreCase(selectedStation.getStatus()) ? "Station ouverte" : "Station fermée");
+        }
+        else { status.setText("-"); }
 
         TextView availableBikeStands = (TextView) findViewById(R.id.station_available_bike_stands);
         assert availableBikeStands != null;
-        availableBikeStands.setText(String.format("%s %s",
-                selectedStation.getAvailableBikeStands().toString(),
-                (selectedStation.getAvailableBikeStands() > 0 ? "places disponibles" : "place disponible")));
-        availableBikeStands.setTextColor(getAvailabilityColor(selectedStation.getAvailableBikeStands(), selectedStation.getBikeStands()));
+        if (!isModeOffline) {
+            availableBikeStands.setText(String.format("%s %s",
+                    selectedStation.getAvailableBikeStands().toString(),
+                    (selectedStation.getAvailableBikeStands() > 0 ? "places disponibles" : "place disponible")));
+            availableBikeStands.setTextColor(getAvailabilityColor(selectedStation.getAvailableBikeStands(), selectedStation.getBikeStands()));
+        }
+        else {
+            availableBikeStands.setText("-");
+            availableBikeStands.setTextColor((Color.BLACK));
+        }
 
         ImageView availableBikeStandsImg = (ImageView) findViewById(R.id.image_station_available_bike_stands);
         assert availableBikeStandsImg != null;
@@ -642,10 +668,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         TextView availableBikes = (TextView) findViewById(R.id.station_available_bikes);
         assert availableBikes != null;
-        availableBikes.setText(String.format("%s %s",
-                selectedStation.getAvailableBikes().toString(),
-                (selectedStation.getAvailableBikes() > 0 ? "vélos disponibles" : "vélo disponible")));
-        availableBikes.setTextColor(getAvailabilityColor(selectedStation.getAvailableBikes(), selectedStation.getBikeStands()));
+        if (!isModeOffline) {
+            availableBikes.setText(String.format("%s %s",
+                    selectedStation.getAvailableBikes().toString(),
+                    (selectedStation.getAvailableBikes() > 0 ? "vélos disponibles" : "vélo disponible")));
+            availableBikes.setTextColor(getAvailabilityColor(selectedStation.getAvailableBikes(), selectedStation.getBikeStands()));
+        }
+        else {
+            availableBikes.setText("-");
+            availableBikes.setTextColor(Color.BLACK);
+        }
 
         ImageView availableBikesImg = (ImageView) findViewById(R.id.image_station_available_bikes);
         assert availableBikesImg != null;
